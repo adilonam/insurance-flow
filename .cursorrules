@@ -1,0 +1,14 @@
+# Next.js Admin Dashboard - Cursor Rules
+
+This project uses:
+
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Shadcn UI
+- React Hook Form
+- Zustand
+- TanStack Table
+- Zod
+
+Follow colocation architecture: each feature keeps its pages, components, and logic inside its route folder. Shared UI, hooks, and config live at the top level. Maintain modern, minimal, and flexible design patterns.
