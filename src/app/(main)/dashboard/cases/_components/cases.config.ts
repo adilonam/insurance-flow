@@ -7,23 +7,20 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     id: "C-1001",
     title: "Vehicle Accident Claim - Highway Collision",
     client: "John Smith",
-    status: "3.2",
+    status: "1",
     priority: "High",
     assignedTo: "Sarah Johnson",
     createdAt: "2024-01-15",
     updatedAt: "2h ago",
-    description: "Client requires authorization and mitigation statement for the accident that occurred on January 10th, 2024.",
+    description:
+      "Client requires authorization and mitigation statement for the accident that occurred on January 10th, 2024.",
     statusDateTime: "2024-02-15 14:30",
     files: [
       { id: "F-001", name: "authorization_form.pdf", url: "#", uploadedAt: "2024-02-15 14:25" },
       { id: "F-002", name: "mitigation_statement.docx", url: "#", uploadedAt: "2024-02-15 14:28" },
     ],
     statusHistory: [
-      { status: "1", dateTime: "2024-01-15 10:00", description: "Initial assessment completed" },
-      { status: "2", dateTime: "2024-01-16 11:30", description: "Accident images uploaded" },
-      { status: "3", dateTime: "2024-01-18 09:15", description: "Client ID verified" },
-      { status: "3.1", dateTime: "2024-01-20 16:45", description: "Vehicle documents received" },
-      { status: "3.2", dateTime: "2024-02-15 14:30", description: "Awaiting authorization statement" },
+    
     ],
   },
   {
@@ -37,9 +34,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "5h ago",
     description: "DVLA licence check in progress. Waiting for verification results from DVLA.",
     statusDateTime: "2024-02-14 10:15",
-    files: [
-      { id: "F-003", name: "dvla_check_request.pdf", url: "#", uploadedAt: "2024-02-14 10:10" },
-    ],
+    files: [{ id: "F-003", name: "dvla_check_request.pdf", url: "#", uploadedAt: "2024-02-14 10:10" }],
     statusHistory: [
       { status: "1", dateTime: "2024-01-20 08:00", description: "Initial assessment" },
       { status: "2", dateTime: "2024-01-21 14:20", description: "Accident images collected" },
@@ -59,9 +54,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "1d ago",
     description: "Client needs to provide 3 months of bank statements prior to the accident date (January 5th, 2024).",
     statusDateTime: "2024-02-13 16:20",
-    files: [
-      { id: "F-004", name: "bank_statement_request.pdf", url: "#", uploadedAt: "2024-02-13 16:15" },
-    ],
+    files: [{ id: "F-004", name: "bank_statement_request.pdf", url: "#", uploadedAt: "2024-02-13 16:15" }],
     statusHistory: [
       { status: "1", dateTime: "2024-01-22 09:30", description: "Case opened" },
       { status: "2", dateTime: "2024-01-23 15:00", description: "Images received" },
@@ -83,9 +76,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "3d ago",
     description: "Permission letter drafted and ready for client signature.",
     statusDateTime: "2024-02-12 13:45",
-    files: [
-      { id: "F-005", name: "permission_letter_draft.pdf", url: "#", uploadedAt: "2024-02-12 13:40" },
-    ],
+    files: [{ id: "F-005", name: "permission_letter_draft.pdf", url: "#", uploadedAt: "2024-02-12 13:40" }],
     statusHistory: [
       { status: "1", dateTime: "2024-01-25 08:00", description: "Assessment started" },
       { status: "2", dateTime: "2024-01-26 10:00", description: "All images collected" },
@@ -152,9 +143,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "4h ago",
     description: "AskMID search completed. Results show vehicle is insured and valid.",
     statusDateTime: "2024-02-15 11:30",
-    files: [
-      { id: "F-008", name: "askmid_results.pdf", url: "#", uploadedAt: "2024-02-15 11:25" },
-    ],
+    files: [{ id: "F-008", name: "askmid_results.pdf", url: "#", uploadedAt: "2024-02-15 11:25" }],
     statusHistory: [
       { status: "1", dateTime: "2024-02-01 08:00", description: "Assessment completed" },
       { status: "2", dateTime: "2024-02-02 14:00", description: "Accident photos received" },
@@ -217,9 +206,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "6h ago",
     description: "Client has been unresponsive for over 2 weeks. Multiple contact attempts made.",
     statusDateTime: "2024-02-15 09:00",
-    files: [
-      { id: "F-011", name: "contact_attempts_log.pdf", url: "#", uploadedAt: "2024-02-15 08:55" },
-    ],
+    files: [{ id: "F-011", name: "contact_attempts_log.pdf", url: "#", uploadedAt: "2024-02-15 08:55" }],
     statusHistory: [
       { status: "1", dateTime: "2024-02-07 08:00", description: "Case opened" },
       { status: "2", dateTime: "2024-02-08 10:00", description: "Images uploaded" },
@@ -265,9 +252,7 @@ export const casesData: z.infer<typeof caseSchema>[] = [
     updatedAt: "3h ago",
     description: "Isagi check in progress. Verifying client's insurance and claim history.",
     statusDateTime: "2024-02-15 12:00",
-    files: [
-      { id: "F-014", name: "isagi_check_request.pdf", url: "#", uploadedAt: "2024-02-15 11:55" },
-    ],
+    files: [{ id: "F-014", name: "isagi_check_request.pdf", url: "#", uploadedAt: "2024-02-15 11:55" }],
     statusHistory: [
       { status: "1", dateTime: "2024-02-10 08:00", description: "Initial assessment" },
       { status: "2", dateTime: "2024-02-11 10:00", description: "Images received" },
@@ -283,3 +268,36 @@ export function getCaseById(id: string) {
   return casesData.find((c) => c.id === id);
 }
 
+export function createMockCase(data?: {
+  title: string;
+  client: string;
+  priority: "Low" | "Medium" | "High";
+  assignedTo: string;
+}) {
+  const now = new Date();
+  const caseId = `C-${1000 + casesData.length + 1}`;
+  const dateStr = now.toISOString().split("T")[0];
+  const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+  const newCase: z.infer<typeof caseSchema> = {
+    id: caseId,
+    title: data?.title || "New Case - Initial Assessment",
+    client: data?.client || "New Client",
+    status: "1", // Always set to Initial Assessment
+    priority: data?.priority || "Medium",
+    assignedTo: data?.assignedTo || "Unassigned",
+    createdAt: dateStr,
+    updatedAt: "just now",
+    description: data?.title
+      ? `Case: ${data.title} - Initial Assessment`
+      : "Case created automatically in Initial Assessment status",
+    statusDateTime: `${dateStr} ${timeStr}`,
+    statusHistory: [
+      { status: "1", dateTime: `${dateStr} ${timeStr}`, description: "Case created - Initial Assessment" },
+    ],
+    initialAssessment: {},
+  };
+
+  casesData.unshift(newCase);
+  return newCase;
+}

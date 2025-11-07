@@ -3,6 +3,7 @@ import { getCaseById } from "../_components/cases.config";
 import { CaseTimeline } from "./_components/case-timeline";
 import { CaseFiles } from "./_components/case-files";
 import { StatusNavigation } from "./_components/status-navigation";
+import { InitialAssessmentForm } from "./_components/initial-assessment-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getStatusById } from "../_components/case-statuses";
@@ -63,6 +64,22 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           />
         </CardContent>
       </Card>
+
+      {/* Initial Assessment Form - Show when status is "1" */}
+      {caseData.status === "1" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Initial Assessment Form</CardTitle>
+            <CardDescription>Complete the initial assessment form for this case</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InitialAssessmentForm
+              initialData={caseData.initialAssessment}
+              caseId={caseData.id}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Status Details */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
