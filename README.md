@@ -1,6 +1,6 @@
 # Next.js Admin Template with TypeScript & Shadcn UI
 
-**Insurance Flow** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
+**ClaimSense** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
 
 <img src="https://github.com/arhamkhnz/next-shadcn-admin-dashboard/blob/main/media/dashboard.png?version=5" alt="Dashboard Screenshot">
 
@@ -8,7 +8,7 @@ Most admin templates I found, free or paid, felt cluttered, outdated, or too rig
 
 I’ve taken design inspiration from various sources. If you’d like credit for something specific, feel free to open an issue or reach out.
 
-> **View demo:** [Insurance Flow](https://next-shadcn-admin-dashboard.vercel.app)
+> **View demo:** [ClaimSense](https://next-shadcn-admin-dashboard.vercel.app)
 
 > [!TIP]
 > I’m also working on Nuxt.js, Svelte, and React (Vite + TanStack Router) versions of this dashboard. They’ll be live soon.

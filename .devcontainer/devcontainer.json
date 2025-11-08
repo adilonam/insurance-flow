@@ -1,18 +1,21 @@
 {
   "name": "Next.js Shadcn Admin Dashboard",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "forwardPorts": [3000],
+  "forwardPorts": [3000, 5432],
   "portsAttributes": {
     "3000": {
       "label": "Next.js Dev Server",
       "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
     }
   },
   "postCreateCommand": "npm install",
@@ -23,7 +26,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
-        "ms-vscode.vscode-typescript-next"
+        "ms-vscode.vscode-typescript-next",
+        "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -36,8 +40,6 @@
       }
     }
   },
-"remoteUser": "node",
-  "containerUser": "node",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+  "remoteUser": "node",
+  "containerUser": "node"
 }
-

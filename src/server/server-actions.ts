@@ -1,6 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { hash } from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 export async function getValueFromCookie(key: string): Promise<string | undefined> {
   const cookieStore = await cookies();
@@ -24,4 +26,32 @@ export async function getPreference<T extends string>(key: string, allowed: read
   const cookie = cookieStore.get(key);
   const value = cookie ? cookie.value.trim() : undefined;
   return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+export async function registerUser(email: string, password: string) {
+  try {
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return { error: "User with this email already exists" };
+    }
+
+    // Hash password
+    const hashedPassword = await hash(password, 12);
+
+    // Create user
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    return { error: "Failed to create user. Please try again." };
+  }
 }
