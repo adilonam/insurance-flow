@@ -14,6 +14,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums
+enum CaseStatus {
+  INITIAL_ASSESSMENT
+  ACCIDENT_IMAGES
+  CLIENT_ID_PROOF_OF_ADDRESS
+  CLIENT_VEHICLE_DOCUMENTS
+  AUTHORISATION_MITIGATION_STATEMENT
+  ISAGI_CHECK
+  THREE_MONTHS_BANK_STATEMENTS
+  ASKMID_SEARCH
+  DVLA_LICENCE_CHECK
+  HIRE_VEHICLE_DOCUMENTS
+  HSR_AGREEMENTS
+  PERMISSION_LETTER
+  STRIPE_DETAILS
+  DAMAGE_CHECKLIST
+  CLIENT_QUESTIONNAIRES
+  OFFBOARDING
+  BHR_REPORT
+  CANFORD_LAW_SETUP
+  NON_CO_OPERATIVE_CLIENT
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 // NextAuth.js Models
 model User {
   id            String    @id @default(cuid())
@@ -24,6 +53,8 @@ model User {
   password      String?   // For credentials provider
   accounts      Account[]
   sessions      Session[]
+  assignedCases Case[]    @relation("CaseAssignedTo")
+  createdCases  Case[]    @relation("CaseCreatedBy")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -65,3 +96,28 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// Case Model
+model Case {
+  id         String       @id @default(cuid())
+  caseId     String       @unique // Format: C-1, C-2, etc.
+  title      String
+  client     String
+  status     CaseStatus   @default(INITIAL_ASSESSMENT)
+  priority   CasePriority @default(MEDIUM)
+  assignedTo String?
+  assignedToUser User?      @relation("CaseAssignedTo", fields: [assignedTo], references: [id], onDelete: SetNull)
+  createdBy  String
+  createdByUser User      @relation("CaseCreatedBy", fields: [createdBy], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([caseId])
+  @@index([status])
+  @@index([priority])
+  @@index([assignedTo])
+}
+
+
+
+

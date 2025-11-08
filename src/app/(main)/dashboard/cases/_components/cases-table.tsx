@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
@@ -9,15 +9,60 @@ import { DataTableViewOptions } from "@/components/data-table/data-table-view-op
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from "@/components/ui/card";
 import { useDataTableInstance } from "@/hooks/use-data-table-instance";
+import { toast } from "sonner";
 
-import { casesData } from "./cases.config";
 import { casesColumns } from "./columns.cases";
 import { CreateCaseDialog } from "./create-case-dialog";
 
+type CaseData = {
+  id: string;
+  caseId: string;
+  title: string;
+  client: string;
+  status: string;
+  priority: string;
+  assignedTo: string | null;
+  assignedUser: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  createdByUser: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export function CasesTable() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [data, setData] = useState([...casesData]);
+  const [data, setData] = useState<CaseData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Fetch cases from API
+  const fetchCases = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/cases");
+      if (!response.ok) {
+        throw new Error("Failed to fetch cases");
+      }
+      const cases = await response.json();
+      setData(cases);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+      toast.error("Failed to load cases");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCases();
+  }, [refreshTrigger]);
 
   // Recreate table instance when data changes
   const table = useDataTableInstance({
@@ -27,11 +72,7 @@ export function CasesTable() {
   });
 
   const handleCaseCreated = () => {
-    // Create a completely new array reference from the updated casesData
-    // This ensures React detects the change and re-renders the table
-    const newData = [...casesData];
-    setData(newData);
-    // Trigger a refresh to ensure table updates
+    // Refresh the data
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -55,10 +96,18 @@ export function CasesTable() {
         </CardAction>
       </CardHeader>
       <CardContent key={refreshTrigger} className="flex size-full flex-col gap-4">
-        <div className="overflow-hidden rounded-md border">
-          <DataTable table={table} columns={casesColumns} />
-        </div>
-        <DataTablePagination table={table} />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Loading cases...</p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-hidden rounded-md border">
+              <DataTable table={table} columns={casesColumns} />
+            </div>
+            <DataTablePagination table={table} />
+          </>
+        )}
       </CardContent>
       <CreateCaseDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSuccess={handleCaseCreated} />
     </Card>

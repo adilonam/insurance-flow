@@ -9,9 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { getStatusById } from "./case-statuses";
-import { caseSchema } from "./schema";
+import { mapStatusEnumToId, mapPriorityEnumToDisplay } from "./status-mapper";
+import { Prisma } from "@/generated/prisma/client";
 
-export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
+// Extended Case type with relations
+type CaseWithRelations = Prisma.CaseGetPayload<{
+  include: {
+    assignedToUser: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+    createdByUser: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+  };
+}>;
+
+export const casesColumns: ColumnDef<CaseWithRelations>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -36,9 +57,9 @@ export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
+    accessorKey: "caseId",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Case ID" />,
-    cell: ({ row }) => <span className="tabular-nums font-medium">{row.original.id}</span>,
+    cell: ({ row }) => <span className="font-medium tabular-nums">{row.original.caseId}</span>,
     enableSorting: false,
     enableHiding: false,
   },
@@ -57,9 +78,10 @@ export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => {
-      const statusId = row.original.status;
+      const statusEnum = row.original.status;
+      const statusId = mapStatusEnumToId(statusEnum);
       const status = getStatusById(statusId);
-      const statusLabel = status ? `${status.id}. ${status.label}` : statusId;
+      const statusLabel = status ? `${status.id}. ${status.label}` : statusEnum;
       return <Badge variant="secondary">{statusLabel}</Badge>;
     },
     enableSorting: false,
@@ -68,9 +90,9 @@ export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
     accessorKey: "priority",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Priority" />,
     cell: ({ row }) => {
-      const priority = row.original.priority;
-      const variant =
-        priority === "High" ? "destructive" : priority === "Medium" ? "secondary" : "outline";
+      const priorityEnum = row.original.priority;
+      const priority = mapPriorityEnumToDisplay(priorityEnum);
+      const variant = priority === "High" ? "destructive" : priority === "Medium" ? "secondary" : "outline";
       return <Badge variant={variant}>{priority}</Badge>;
     },
     enableSorting: false,
@@ -78,14 +100,45 @@ export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
   {
     accessorKey: "assignedTo",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Assigned To" />,
-    cell: ({ row }) => <span>{row.original.assignedTo}</span>,
+    cell: ({ row }) => {
+      const assignedUser = row.original.assignedToUser;
+      return <span>{assignedUser?.name || assignedUser?.email || "Unassigned"}</span>;
+    },
+  },
+  {
+    accessorKey: "createdByUser",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Created By" />,
+    cell: ({ row }) => {
+      const createdByUser = row.original.createdByUser;
+      return <span>{createdByUser?.name || createdByUser?.email || "Unknown"}</span>;
+    },
   },
   {
     accessorKey: "updatedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Last Updated" />,
-    cell: ({ row }) => (
-      <span className="text-muted-foreground tabular-nums">{row.original.updatedAt}</span>
-    ),
+    cell: ({ row }) => {
+      const date = new Date(row.original.updatedAt);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      let timeAgo: string;
+      if (diffMins < 1) {
+        timeAgo = "just now";
+      } else if (diffMins < 60) {
+        timeAgo = `${diffMins}m ago`;
+      } else if (diffHours < 24) {
+        timeAgo = `${diffHours}h ago`;
+      } else if (diffDays < 7) {
+        timeAgo = `${diffDays}d ago`;
+      } else {
+        timeAgo = date.toLocaleDateString();
+      }
+
+      return <span className="text-muted-foreground tabular-nums">{timeAgo}</span>;
+    },
     enableSorting: false,
   },
   {
@@ -108,4 +161,3 @@ export const casesColumns: ColumnDef<z.infer<typeof caseSchema>>[] = [
     enableSorting: false,
   },
 ];
-
