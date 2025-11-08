@@ -53,16 +53,7 @@ export const sidebarItems: NavGroup[] = [
         title: "Default",
         url: "/dashboard/default",
         icon: LayoutDashboard,
-      },
-      {
-        title: "CRM",
-        url: "/dashboard/crm",
-        icon: ChartBar,
-      },
-      {
-        title: "Finance",
-        url: "/dashboard/finance",
-        icon: Banknote,
+        comingSoon: true,
       },
       {
         title: "Cases",
@@ -73,18 +64,6 @@ export const sidebarItems: NavGroup[] = [
         title: "Analytics",
         url: "/dashboard/coming-soon",
         icon: Gauge,
-        comingSoon: true,
-      },
-      {
-        title: "E-commerce",
-        url: "/dashboard/coming-soon",
-        icon: ShoppingBag,
-        comingSoon: true,
-      },
-      {
-        title: "Academy",
-        url: "/dashboard/coming-soon",
-        icon: GraduationCap,
         comingSoon: true,
       },
       {
@@ -112,24 +91,6 @@ export const sidebarItems: NavGroup[] = [
         comingSoon: true,
       },
       {
-        title: "Calendar",
-        url: "/dashboard/coming-soon",
-        icon: Calendar,
-        comingSoon: true,
-      },
-      {
-        title: "Kanban",
-        url: "/dashboard/coming-soon",
-        icon: Kanban,
-        comingSoon: true,
-      },
-      {
-        title: "Invoice",
-        url: "/dashboard/coming-soon",
-        icon: ReceiptText,
-        comingSoon: true,
-      },
-      {
         title: "Users",
         url: "/dashboard/coming-soon",
         icon: Users,
@@ -141,17 +102,7 @@ export const sidebarItems: NavGroup[] = [
         icon: Lock,
         comingSoon: true,
       },
-      {
-        title: "Authentication",
-        url: "/auth",
-        icon: Fingerprint,
-        subItems: [
-          { title: "Login v1", url: "/auth/v1/login", newTab: true },
-          { title: "Login v2", url: "/auth/v2/login", newTab: true },
-          { title: "Register v1", url: "/auth/v1/register", newTab: true },
-          { title: "Register v2", url: "/auth/v2/register", newTab: true },
-        ],
-      },
+    
     ],
   },
   {

@@ -29,7 +29,7 @@ export function UserDropdown({
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    router.push("/auth/v2/login");
+    router.push("/auth/login");
     router.refresh();
   };
 
@@ -39,7 +39,7 @@ export function UserDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-9 rounded-lg cursor-pointer">
+        <Avatar className="size-9 cursor-pointer rounded-lg">
           <AvatarImage src={user.image || undefined} alt={displayName} />
           <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
         </Avatar>
@@ -52,7 +52,7 @@ export function UserDropdown({
           </Avatar>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">{displayName}</span>
-            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+            <span className="text-muted-foreground truncate text-xs">{user.email}</span>
           </div>
         </div>
         <DropdownMenuSeparator />
@@ -79,4 +79,3 @@ export function UserDropdown({
     </DropdownMenu>
   );
 }
-

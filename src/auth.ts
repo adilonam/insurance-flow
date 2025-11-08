@@ -19,8 +19,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
   },
   pages: {
-    signIn: "/auth/v2/login",
-    signOut: "/auth/v2/login",
+    signIn: "/auth/login",
+    signOut: "/auth/login",
   },
   providers: [
     Credentials({
@@ -77,4 +77,3 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
-

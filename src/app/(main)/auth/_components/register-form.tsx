@@ -6,10 +6,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { registerUser } from "@/server/server-actions";
 
 const FormSchema = z
@@ -25,6 +27,7 @@ const FormSchema = z
 
 export function RegisterForm() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -35,16 +38,18 @@ export function RegisterForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setIsLoading(true);
     try {
       const result = await registerUser(data.email, data.password);
 
       if (result.error) {
         toast.error(result.error);
+        setIsLoading(false);
         return;
       }
 
       toast.success("Account created successfully!");
-      
+
       // Automatically sign in after registration
       const signInResult = await signIn("credentials", {
         email: data.email,
@@ -54,7 +59,8 @@ export function RegisterForm() {
 
       if (signInResult?.error) {
         toast.error("Account created but login failed. Please try logging in.");
-        router.push("/auth/v2/login");
+        router.push("/auth/login");
+        setIsLoading(false);
         return;
       }
 
@@ -62,6 +68,7 @@ export function RegisterForm() {
       router.refresh();
     } catch (error) {
       toast.error("An error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -113,8 +120,15 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit">
-          Register
+        <Button className="w-full" type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Spinner className="mr-2" />
+              Registering...
+            </>
+          ) : (
+            "Register"
+          )}
         </Button>
       </form>
     </Form>

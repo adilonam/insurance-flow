@@ -6,11 +6,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -20,6 +22,7 @@ const FormSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -30,6 +33,7 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    setIsLoading(true);
     try {
       const result = await signIn("credentials", {
         email: data.email,
@@ -39,6 +43,7 @@ export function LoginForm() {
 
       if (result?.error) {
         toast.error("Invalid email or password");
+        setIsLoading(false);
         return;
       }
 
@@ -47,6 +52,7 @@ export function LoginForm() {
       router.refresh();
     } catch (error) {
       toast.error("An error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -104,8 +110,15 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit">
-          Login
+        <Button className="w-full" type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Spinner className="mr-2" />
+              Logging in...
+            </>
+          ) : (
+            "Login"
+          )}
         </Button>
       </form>
     </Form>
