@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx prisma generate && npx prisma migrate deploy && next build",
+    "build": "npx prisma generate && mkdir -p node_modules/@prisma/client && cp -r src/generated/prisma/* node_modules/@prisma/client/ && npx prisma migrate deploy && next build",
     "start": "next start",
     "postinstall": "npx prisma generate",
     "lint": "eslint",
