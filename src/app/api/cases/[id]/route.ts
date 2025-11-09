@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { CaseStatus } from "@/generated/prisma/client";
 
 // GET - Get a case by ID with InitialAssessment
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

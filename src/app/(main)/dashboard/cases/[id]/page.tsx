@@ -9,8 +9,8 @@ import { mapStatusEnumToLabel, mapPriorityEnumToDisplay, getStatusIdFromEnum } f
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
 import { CaseStatus } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 
 interface CaseDetailPageProps {
   params: Promise<{ id: string }>;
