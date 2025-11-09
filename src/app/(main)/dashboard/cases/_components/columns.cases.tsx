@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { getStatusById } from "./case-statuses";
-import { mapStatusEnumToId, mapPriorityEnumToDisplay } from "./status-mapper";
+import { mapStatusEnumToLabel, mapPriorityEnumToDisplay } from "./status-mapper";
 import { Prisma } from "@/generated/prisma/client";
 
 // Extended Case type with relations
@@ -78,10 +77,7 @@ export const casesColumns: ColumnDef<CaseWithRelations>[] = [
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => {
-      const statusEnum = row.original.status;
-      const statusId = mapStatusEnumToId(statusEnum);
-      const status = getStatusById(statusId);
-      const statusLabel = status ? `${status.id}. ${status.label}` : statusEnum;
+      const statusLabel = mapStatusEnumToLabel(row.original.status);
       return <Badge variant="secondary">{statusLabel}</Badge>;
     },
     enableSorting: false,

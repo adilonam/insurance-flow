@@ -30,13 +30,13 @@ export const initialAssessmentSchema = z.object({
   address2Dates: z.string().optional(),
   address3: z.string().optional(),
   address3Dates: z.string().optional(),
-  
+
   // Defendant Details
   defendantName: z.string().optional(),
   defendantReg: z.string().optional(),
   defendantContactNumber: z.string().optional(),
   defendantMakeModelColor: z.string().optional(),
-  
+
   // Claimant Details
   claimantVehicleRegistration: z.string().optional(),
   claimantInsurer: z.string().optional(),
@@ -61,19 +61,19 @@ export const initialAssessmentSchema = z.object({
   carOnFinance: z.string().optional(), // Y/N
   workInMotorTrade: z.string().optional(), // Y/N
   needForPrestigeVehicle: z.string().optional(), // Y/N
-  
+
   // Private Hire Driver
   privateHireLicenceYears: z.string().optional(),
   taxiIncomePercent: z.string().optional(),
   additionalEmployment: z.string().optional(),
-  
+
   // Witness Details
   witnessName: z.string().optional(),
   witnessContactNumber: z.string().optional(),
   witnessDetailsObtained: z.string().optional(),
   witnessRelationToClaimant: z.string().optional(),
   witnessAdditionalInformation: z.string().optional(),
-  
+
   // Insurance Eligibility Questions
   nonStandardDriver: z.boolean().optional(),
   agedBetween25And70: z.boolean().optional(),
@@ -105,9 +105,8 @@ export const caseSchema = z.object({
         status: z.string(),
         dateTime: z.string(),
         description: z.string().optional(),
-      })
+      }),
     )
     .optional(),
   initialAssessment: initialAssessmentSchema.optional(),
 });
-

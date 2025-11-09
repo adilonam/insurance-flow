@@ -32,12 +32,9 @@ export function CaseFiles({ files }: CaseFilesProps) {
       <CardContent>
         <div className="space-y-2">
           {files.map((file) => (
-            <div
-              key={file.id}
-              className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50"
-            >
+            <div key={file.id} className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3">
               <div className="flex items-center gap-3">
-                <File className="size-5 text-muted-foreground" />
+                <File className="text-muted-foreground size-5" />
                 <div>
                   <div className="font-medium">{file.name}</div>
                   <div className="text-muted-foreground text-xs">Uploaded: {file.uploadedAt}</div>
@@ -56,4 +53,3 @@ export function CaseFiles({ files }: CaseFilesProps) {
     </Card>
   );
 }
-

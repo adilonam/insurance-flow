@@ -2,6 +2,7 @@
 
 import { Download, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
@@ -12,33 +13,17 @@ import { useDataTableInstance } from "@/hooks/use-data-table-instance";
 import { toast } from "sonner";
 
 import { casesColumns } from "./columns.cases";
-import { CreateCaseDialog } from "./create-case-dialog";
+import { Prisma } from "@/generated/prisma/client";
 
-type CaseData = {
-  id: string;
-  caseId: string;
-  title: string;
-  client: string;
-  status: string;
-  priority: string;
-  assignedTo: string | null;
-  assignedUser: {
-    id: string;
-    name: string | null;
-    email: string;
-  } | null;
-  createdByUser: {
-    id: string;
-    name: string | null;
-    email: string;
-  } | null;
-  createdAt: string;
-  updatedAt: string;
-};
+type CaseWithRelations = Prisma.CaseGetPayload<{
+  include: {
+    assignedToUser: true;
+    createdByUser: true;
+  };
+}>;
 
 export function CasesTable() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [data, setData] = useState<CaseData[]>([]);
+  const [data, setData] = useState<CaseWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -71,11 +56,6 @@ export function CasesTable() {
     getRowId: (row) => row.id.toString(),
   });
 
-  const handleCaseCreated = () => {
-    // Refresh the data
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -83,9 +63,11 @@ export function CasesTable() {
         <CardDescription>View and manage all legal cases and their current status.</CardDescription>
         <CardAction>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
-              <Plus className="size-4" />
-              <span className="hidden lg:inline">Create Case</span>
+            <Button asChild size="sm">
+              <Link href="/dashboard/cases/new">
+                <Plus className="size-4" />
+                <span className="hidden lg:inline">Create Case</span>
+              </Link>
             </Button>
             <DataTableViewOptions table={table} />
             <Button variant="outline" size="sm">
@@ -109,7 +91,6 @@ export function CasesTable() {
           </>
         )}
       </CardContent>
-      <CreateCaseDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onSuccess={handleCaseCreated} />
     </Card>
   );
 }

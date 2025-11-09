@@ -116,6 +116,92 @@ model Case {
   @@index([status])
   @@index([priority])
   @@index([assignedTo])
+  initialAssessments InitialAssessment[]
+}
+
+
+
+model InitialAssessment {
+  id                        String   @id @default(cuid())
+  caseId                    String   // FK to Case
+  claimReference            String?
+  fullName                  String?
+  address                   String?
+  postCode                  String?
+  dateMovedIn               DateTime?
+  dateOfBirth               DateTime?
+  niNumber                  String?
+  dlNumber                  String?
+  dlIssue                   DateTime?
+  dlExpiry                  DateTime?
+  claimantContactNumber     String?
+  emailAddress              String?
+  accidentLocation          String?
+  accidentCircumstances     String?
+  dateOfAccident            DateTime?
+  timeOfAccident            String?
+  livedInCurrentAddress3Years String?
+  address2                  String?
+  address2Dates             String?
+  address3                  String?
+  address3Dates             String?
+  // Defendant Details
+  defendantName             String?
+  defendantReg              String?
+  defendantContactNumber    String?
+  defendantMakeModelColor   String?
+  // Claimant Details
+  claimantVehicleRegistration String?
+  claimantInsurer           String?
+  claimantMakeModel         String?
+  mainPolicyHolder          String?
+  additionalDriver1         String?
+  additionalDriver2         String?
+  additionalDriver3         String?
+  noClaimsBonus             String?
+  insuranceType             String?
+  dateLicenceObtained       DateTime?
+  occupation                String?
+  ukResidentFromBirth       String?
+  ukResidentSince           DateTime?
+  vehicleValidMOTAndTax     String?
+  everDeclaredBankrupt      String?
+  claimantClaimingInjury    String?
+  additionalInformation     String?
+  accessToOtherVehicles     String?
+  ownTheVehicle             String?
+  vehicleOwnerRelationship  String?
+  carOnFinance              String?
+  workInMotorTrade          String?
+  needForPrestigeVehicle    String?
+  // Private Hire Driver
+  privateHireLicenceYears   String?
+  taxiIncomePercent         String?
+  additionalEmployment      String?
+  // Witness Details
+  witnessName               String?
+  witnessContactNumber      String?
+  witnessDetailsObtained    String?
+  witnessRelationToClaimant String?
+  witnessAdditionalInformation String?
+  // Insurance Eligibility Questions
+  nonStandardDriver               Boolean?
+  agedBetween25And70              Boolean?
+  fullUKOrEUDrivingLicense2Years  Boolean?
+  taxiLicence1Year                Boolean?
+  ukResident3Years                Boolean?
+  noMoreThan9PenaltyPoints        Boolean?
+  notBannedFromDriving5Years      Boolean?
+  noMoreThan1FaultClaim2Years     Boolean?
+  noNonSpentCriminalConvictions   Boolean?
+  noDisabilityOrMedicalCondition  Boolean?
+
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  case                      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId])
 }
 
 

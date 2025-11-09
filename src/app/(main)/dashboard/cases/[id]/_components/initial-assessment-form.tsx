@@ -743,7 +743,8 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Have you got access to other vehicles? (Either a named driver on / Other Logbook registered in your name / pay for any road tax or insurance for other vehicles?)
+                    Have you got access to other vehicles? (Either a named driver on / Other Logbook registered in your
+                    name / pay for any road tax or insurance for other vehicles?)
                   </FormLabel>
                   <FormControl>
                     <Textarea placeholder="Enter details" rows={3} {...field} />
@@ -1004,7 +1005,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="nonStandardDriver"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1019,7 +1020,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="agedBetween25And70"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1034,7 +1035,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="fullUKOrEUDrivingLicense2Years"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1049,7 +1050,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="taxiLicence1Year"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1064,7 +1065,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="ukResident3Years"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1081,15 +1082,15 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="noMoreThan9PenaltyPoints"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
                       Have not during the last 3 years been convicted of or has a pending prosecution for any offence or
-                      combination of offences: which result or may result in more than 9 penalty points being endorsed on
-                      his/her driving licence. which result or may result in a loss of licence or suspension/ban from
+                      combination of offences: which result or may result in more than 9 penalty points being endorsed
+                      on his/her driving licence. which result or may result in a loss of licence or suspension/ban from
                       driving.
                     </FormLabel>
                   </div>
@@ -1101,7 +1102,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="notBannedFromDriving5Years"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1116,7 +1117,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="noMoreThan1FaultClaim2Years"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1131,7 +1132,7 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="noNonSpentCriminalConvictions"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
@@ -1146,15 +1147,15 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
               control={form.control}
               name="noDisabilityOrMedicalCondition"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Not suffered from any disability or medical condition which has not been notified to, is notifiable,
-                      the Driver Vehicle Licencing Authority or which has been notified but resulted in the refusal of a
-                      driving licence for the class of vehicle to be driven
+                      Not suffered from any disability or medical condition which has not been notified to, is
+                      notifiable, the Driver Vehicle Licencing Authority or which has been notified but resulted in the
+                      refusal of a driving licence for the class of vehicle to be driven
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -1173,4 +1174,3 @@ export function InitialAssessmentForm({ initialData, caseId, onSave }: InitialAs
     </Form>
   );
 }
-

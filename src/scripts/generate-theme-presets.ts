@@ -34,7 +34,6 @@ if (files.length === 0) {
   console.warn("⚠️ No preset CSS files found. Only default preset will be included.");
 }
 
- 
 const presets = files.map((file) => {
   const filePath = path.join(presetDir, file);
   const content = fs.readFileSync(filePath, "utf8");

@@ -102,7 +102,6 @@ export const sidebarItems: NavGroup[] = [
         icon: Lock,
         comingSoon: true,
       },
-    
     ],
   },
   {

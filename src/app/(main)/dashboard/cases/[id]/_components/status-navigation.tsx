@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getNextStatus, getPreviousStatus } from "../../_components/case-statuses";
+import { getNextStatus, getPreviousStatus } from "../../_components/status-mapper";
 import { useRouter } from "next/navigation";
 
 interface StatusNavigationProps {
@@ -25,23 +25,14 @@ export function StatusNavigation({ currentStatusId, caseId }: StatusNavigationPr
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        onClick={() => handleStatusChange(previousStatus)}
-        disabled={!previousStatus}
-      >
+      <Button variant="outline" onClick={() => handleStatusChange(previousStatus)} disabled={!previousStatus}>
         <ChevronLeft className="size-4" />
         Previous Status
       </Button>
-      <Button
-        variant="default"
-        onClick={() => handleStatusChange(nextStatus)}
-        disabled={!nextStatus}
-      >
+      <Button variant="default" onClick={() => handleStatusChange(nextStatus)} disabled={!nextStatus}>
         Next Status
         <ChevronRight className="size-4" />
       </Button>
     </div>
   );
 }
-

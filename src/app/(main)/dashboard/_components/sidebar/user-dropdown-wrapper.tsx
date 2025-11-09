@@ -10,4 +10,3 @@ export async function UserDropdownWrapper() {
 
   return <UserDropdown user={session.user} />;
 }
-
