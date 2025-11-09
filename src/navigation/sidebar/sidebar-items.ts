@@ -18,6 +18,7 @@ import {
   Briefcase,
   Building2,
   Handshake,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -63,15 +64,22 @@ export const sidebarItems: NavGroup[] = [
         icon: Briefcase,
       },
       {
-        title: "ServiceProvider",
-        url: "/dashboard/service-providers",
-        icon: Building2,
+        title: "Claims",
+        url: "/dashboard/claims",
+        icon: FileText,
       },
       {
         title: "Partner",
         url: "/dashboard/partners",
         icon: Handshake,
       },
+      {
+        title: "ServiceProvider",
+        url: "/dashboard/service-providers",
+        icon: Building2,
+      },
+  
+   
       {
         title: "Analytics",
         url: "/dashboard/coming-soon",

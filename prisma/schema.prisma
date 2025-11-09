@@ -277,6 +277,57 @@ model Partner {
 
 
 
+enum ClaimType {
+  FAULT
+  NON_FAULT
+}
+
+enum ClaimStatus {
+  PENDING_TRIAGE
+  ACCEPTED
+  REJECTED
+  IN_PROGRESS_SERVICES   // Services active (e.g. hire ongoing)
+  IN_PROGRESS_REPAIRS    // CIL received, repairs booked
+  PENDING_OFFBOARDING    // Hire ended, collating final docs
+  PENDING_OFFBOARDING_NONCOOPERATIVE // Client is unresponsive
+  PAYMENT_PACK_PREPARATION // Offboarding complete, final billing
+  AWAITING_FINAL_PAYMENT    // Pack sent to TPI
+  CLOSED
+}
+
+// Supports document storage + nested relations for outlays and documents
+model Claim {
+  id               String      @id @default(cuid())
+  dateOfAccident   DateTime
+  type             ClaimType
+  status           ClaimStatus
+
+  clientName       String
+  clientMobile     String
+  clientDob        DateTime
+  clientPostCode   String
+
+  additionalDriverName   String?
+  additionalDriverMobile String?
+  additionalDriverDob    DateTime?
+  additionalDriverPostCode String?
+
+  tpiInsurerName   String?
+  tpiInsurerContact String?
+
+
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+
+
+
+
+
+
+
 
 
 
