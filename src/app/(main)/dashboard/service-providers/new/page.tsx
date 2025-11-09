@@ -3,4 +3,3 @@ import { CreateServiceProviderForm } from "../_components/create-service-provide
 export default function NewServiceProviderPage() {
   return <CreateServiceProviderForm />;
 }
-

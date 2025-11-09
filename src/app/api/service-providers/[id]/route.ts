@@ -135,4 +135,3 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: "Failed to delete service provider" }, { status: 500 });
   }
 }
-

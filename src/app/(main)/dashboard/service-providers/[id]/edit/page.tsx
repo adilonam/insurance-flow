@@ -8,4 +8,3 @@ export default async function EditServiceProviderPage({ params }: EditServicePro
   const { id } = await params;
   return <EditServiceProviderForm id={id} />;
 }
-
