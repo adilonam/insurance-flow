@@ -1,0 +1,243 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+// Schema for service provider update
+const updateServiceProviderSchema = z.object({
+  type: z.enum(["INTERNAL", "EXTERNAL"], {
+    required_error: "Type is required",
+  }),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
+type UpdateServiceProviderFormValues = z.infer<typeof updateServiceProviderSchema>;
+
+interface EditServiceProviderFormProps {
+  id: string;
+}
+
+export function EditServiceProviderForm({ id }: EditServiceProviderFormProps) {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const form = useForm<UpdateServiceProviderFormValues>({
+    resolver: zodResolver(updateServiceProviderSchema),
+    defaultValues: {
+      type: "EXTERNAL",
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+    },
+  });
+
+  // Fetch service provider data
+  useEffect(() => {
+    const fetchServiceProvider = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/service-providers/${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch service provider");
+        }
+        const data = await response.json();
+        form.reset({
+          type: data.type,
+          name: data.name,
+          email: data.email || "",
+          phone: data.phone || "",
+          address: data.address || "",
+        });
+      } catch (error) {
+        console.error("Error fetching service provider:", error);
+        toast.error("Failed to load service provider");
+        router.push("/dashboard/service-providers");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServiceProvider();
+  }, [id, form, router]);
+
+  const onSubmit = async (data: UpdateServiceProviderFormValues) => {
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(`/api/service-providers/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update service provider");
+      }
+
+      toast.success("Service provider updated successfully");
+      router.push("/dashboard/service-providers");
+      router.refresh();
+    } catch (error) {
+      console.error("Error updating service provider:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update service provider");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+        <span className="text-muted-foreground ml-2">Loading service provider...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard/service-providers">
+            <ArrowLeft className="size-4" />
+            <span className="sr-only">Back to service providers</span>
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold">Edit Service Provider</h1>
+          <p className="text-muted-foreground">Update service provider information</p>
+        </div>
+      </div>
+
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Service Provider Details</CardTitle>
+          <CardDescription>Update the information for this service provider</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="INTERNAL">Internal</SelectItem>
+                          <SelectItem value="EXTERNAL">External</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Select whether this is an internal or external service provider</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter service provider name" {...field} />
+                      </FormControl>
+                      <FormDescription>The name of the service provider</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="Enter email address" {...field} />
+                      </FormControl>
+                      <FormDescription>Contact email address (optional)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="Enter phone number" {...field} />
+                      </FormControl>
+                      <FormDescription>Contact phone number (optional)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Enter address" {...field} />
+                    </FormControl>
+                    <FormDescription>Physical address (optional)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-end gap-4">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/dashboard/service-providers">Cancel</Link>
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Update Service Provider
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

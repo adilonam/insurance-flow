@@ -16,6 +16,7 @@ import {
   Gauge,
   GraduationCap,
   Briefcase,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,6 +60,11 @@ export const sidebarItems: NavGroup[] = [
         title: "Cases",
         url: "/dashboard/cases",
         icon: Briefcase,
+      },
+      {
+        title: "ServiceProvider",
+        url: "/dashboard/service-providers",
+        icon: Building2,
       },
       {
         title: "Analytics",

@@ -8,7 +8,7 @@ generator client {
   provider      = "prisma-client-js"
   seed          = "prisma/seed.ts"
   output        = "../src/generated/prisma"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -205,6 +205,78 @@ model InitialAssessment {
 
   @@index([caseId])
 }
+
+
+
+model ServiceProvider {
+  id        String                @id @default(cuid())
+  type      ServiceProviderType
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  // Relations from Partner
+  vehicleRecoveryPartners    Partner[] @relation("VehicleRecovery")
+  vehicleStoragePartners     Partner[] @relation("VehicleStorage")
+  replacementHirePartners    Partner[] @relation("ReplacementHire")
+  vehicleRepairsPartners     Partner[] @relation("VehicleRepairs")
+  independentEngineerPartners Partner[] @relation("IndependentEngineer")
+  vehicleInspectionPartners  Partner[] @relation("VehicleInspection")
+}
+
+enum ServiceProviderType {
+  INTERNAL
+  EXTERNAL
+}
+
+
+
+enum PartnerType {
+  DIRECT
+  BROKER
+  INSURER
+  BODYSHOP
+  DEALERSHIP
+  FLEET
+}
+
+model Partner {
+  id        String      @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  type      PartnerType
+
+  // Service Provider Relations
+  vehicleRecoveryId     String? @map("vehicle_recovery_id")
+  vehicleRecovery       ServiceProvider? @relation("VehicleRecovery", fields: [vehicleRecoveryId], references: [id], onDelete: SetNull)
+
+  vehicleStorageId      String? @map("vehicle_storage_id")
+  vehicleStorage        ServiceProvider? @relation("VehicleStorage", fields: [vehicleStorageId], references: [id], onDelete: SetNull)
+
+  replacementHireId     String? @map("replacement_hire_id")
+  replacementHire       ServiceProvider? @relation("ReplacementHire", fields: [replacementHireId], references: [id], onDelete: SetNull)
+
+  vehicleRepairsId      String? @map("vehicle_repairs_id")
+  vehicleRepairs        ServiceProvider? @relation("VehicleRepairs", fields: [vehicleRepairsId], references: [id], onDelete: SetNull)
+
+  independentEngineerId String? @map("independent_engineer_id")
+  independentEngineer   ServiceProvider? @relation("IndependentEngineer", fields: [independentEngineerId], references: [id], onDelete: SetNull)
+
+  vehicleInspectionId   String? @map("vehicle_inspection_id")
+  vehicleInspection     ServiceProvider? @relation("VehicleInspection", fields: [vehicleInspectionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+
+
+
 
 
 
