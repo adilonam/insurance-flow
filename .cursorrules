@@ -18,3 +18,4 @@ This project uses:
 # Rules
 - read always prisma/schema.prisma
 - always use type of generated prisma client if with relation use GetPayload
+- always for prims check : import { prisma } from "@/lib/prisma";
