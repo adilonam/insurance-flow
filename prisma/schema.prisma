@@ -45,6 +45,14 @@ enum CasePriority {
   HIGH
 }
 
+enum Role {
+  USER
+  PARTNER
+  ADMIN
+}
+
+
+
 // NextAuth.js Models
 model User {
   id            String    @id @default(cuid())
@@ -53,6 +61,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?   // For credentials provider
+  role          Role      @default(USER)
   accounts      Account[]
   sessions      Session[]
   assignedCases Case[]    @relation("CaseAssignedTo")
