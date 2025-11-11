@@ -102,7 +102,7 @@ export function CreateUserForm() {
   }, []);
 
   // Track debounce timer and previous query
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const prevQueryRef = useRef<string>("");
 
   // Handle query change with debouncing
@@ -234,7 +234,7 @@ export function CreateUserForm() {
                       <FormControl>
                         <Input placeholder="Enter user name" {...field} />
                       </FormControl>
-                      <FormDescription>User's full name (optional)</FormDescription>
+                      <FormDescription>User&apos;s full name (optional)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -249,7 +249,7 @@ export function CreateUserForm() {
                       <FormControl>
                         <Input type="email" placeholder="Enter email address" {...field} />
                       </FormControl>
-                      <FormDescription>User's email address (required)</FormDescription>
+                      <FormDescription>User&apos;s email address (required)</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -288,7 +288,7 @@ export function CreateUserForm() {
                           <SelectItem value="ADMIN">Admin</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>User's role in the system</FormDescription>
+                      <FormDescription>User&apos;s role in the system</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
