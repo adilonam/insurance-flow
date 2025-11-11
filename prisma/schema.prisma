@@ -62,6 +62,8 @@ model User {
   image         String?
   password      String?   // For credentials provider
   role          Role      @default(USER)
+  partnerId     String?
+  partner       Partner?  @relation(fields: [partnerId], references: [id], onDelete: SetNull)
   accounts      Account[]
   sessions      Session[]
   assignedCases Case[]    @relation("CaseAssignedTo")
@@ -278,6 +280,8 @@ model Partner {
 
   vehicleInspectionId   String? @map("vehicle_inspection_id")
   vehicleInspection     ServiceProvider? @relation("VehicleInspection", fields: [vehicleInspectionId], references: [id], onDelete: SetNull)
+
+  users     User[]
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt

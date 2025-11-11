@@ -78,8 +78,12 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/service-providers",
         icon: Building2,
       },
-  
-   
+      {
+        title: "Users",
+        url: "/dashboard/users",
+        icon: Users,
+      },
+
       {
         title: "Analytics",
         url: "/dashboard/coming-soon",
@@ -108,12 +112,6 @@ export const sidebarItems: NavGroup[] = [
         title: "Chat",
         url: "/dashboard/coming-soon",
         icon: MessageSquare,
-        comingSoon: true,
-      },
-      {
-        title: "Users",
-        url: "/dashboard/coming-soon",
-        icon: Users,
         comingSoon: true,
       },
       {
