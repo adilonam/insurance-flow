@@ -70,6 +70,22 @@ export async function GET(request: NextRequest) {
     }
 
     const claims = await prisma.claim.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        partner: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -93,6 +109,27 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createClaimSchema.parse(body);
+
+    // Get user from session
+    const userId = session.user?.id;
+    if (!userId) {
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 401 });
+    }
+
+    // Fetch user with partnerId
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, partnerId: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if user has a partner (required for claim)
+    if (!user.partnerId) {
+      return NextResponse.json({ error: "User must be associated with a partner to create claims" }, { status: 400 });
+    }
 
     // Map type and status strings to enums
     const typeMap: Record<string, ClaimType> = {
@@ -146,6 +183,8 @@ export async function POST(request: NextRequest) {
           validatedData.tpiInsurerContact && validatedData.tpiInsurerContact.trim() !== ""
             ? validatedData.tpiInsurerContact
             : null,
+        userId: user.id,
+        partnerId: user.partnerId,
       },
     });
 
@@ -158,4 +197,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to create claim" }, { status: 500 });
   }
 }
-

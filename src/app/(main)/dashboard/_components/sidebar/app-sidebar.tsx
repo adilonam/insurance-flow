@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { Settings, CircleHelp, Search, Database, ClipboardList, File, Command } from "lucide-react";
 
@@ -16,47 +17,32 @@ import {
 import { APP_CONFIG } from "@/config/app-config";
 import { rootUser } from "@/data/users";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
+import { Role } from "@/generated/prisma/client";
 
 import { NavMain } from "./nav-main";
 
-const data = {
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: CircleHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: Search,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: Database,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: ClipboardList,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: File,
-    },
-  ],
-};
+// Filter sidebar items based on user role
+function filterSidebarItemsByRole(items: typeof sidebarItems, userRole: Role) {
+  return items.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      // If no roles specified, allow all (for backward compatibility)
+      if (!item.roles || item.roles.length === 0) {
+        return true;
+      }
+      // Check if user role is in allowed roles
+      return item.roles.includes(userRole);
+    }),
+  }));
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role || "USER";
+
+  // Filter items based on user role
+  const filteredItems = filterSidebarItemsByRole(sidebarItems, userRole);
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -72,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={sidebarItems} />
+        <NavMain items={filteredItems} />
         {/* <NavDocuments items={data.documents} /> */}
         {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>

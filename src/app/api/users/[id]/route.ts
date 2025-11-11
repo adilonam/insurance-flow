@@ -6,11 +6,23 @@ import { auth } from "@/auth";
 import { Role } from "@/generated/prisma/client";
 
 const updateUserSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
+  name: z
+    .preprocess(
+      (val) => (val === "" || val === null ? null : val),
+      z.union([z.string().min(1, "Name must be at least 1 character"), z.null()]),
+    )
+    .optional(),
   email: z.string().email("Invalid email address").optional(),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z
+    .preprocess(
+      (val) => (val === "" || val === null ? null : val),
+      z.union([z.string().min(6, "Password must be at least 6 characters"), z.null()]),
+    )
+    .optional(),
   role: z.enum(["USER", "PARTNER", "ADMIN"]).optional(),
-  partnerId: z.string().optional(),
+  partnerId: z
+    .preprocess((val) => (val === "" || val === null ? null : val), z.union([z.string(), z.null()]))
+    .optional(),
 });
 
 // GET - Get a user by ID
@@ -92,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     };
 
     const updateData: {
-      name?: string;
+      name?: string | null;
       email?: string;
       password?: string;
       role?: Role;
@@ -100,7 +112,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     } = {};
 
     if (validatedData.name !== undefined) {
-      updateData.name = validatedData.name;
+      updateData.name = validatedData.name && validatedData.name.trim() !== "" ? validatedData.name : null;
     }
     if (validatedData.email !== undefined) {
       updateData.email = validatedData.email;
@@ -118,7 +130,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData.role = roleMap[validatedData.role] || Role.USER;
     }
     if (validatedData.partnerId !== undefined) {
-      updateData.partnerId = validatedData.partnerId && validatedData.partnerId.trim() !== "" ? validatedData.partnerId : null;
+      updateData.partnerId =
+        validatedData.partnerId && validatedData.partnerId.trim() !== "" ? validatedData.partnerId : null;
     }
 
     const user = await prisma.user.update({
@@ -178,4 +191,3 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }
-

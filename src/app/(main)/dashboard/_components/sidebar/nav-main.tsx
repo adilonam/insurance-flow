@@ -26,9 +26,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { type NavGroup, type NavMainItem } from "@/navigation/sidebar/sidebar-items";
+import { Role } from "@/generated/prisma/client";
+import { useSession } from "next-auth/react";
 
 interface NavMainProps {
   readonly items: readonly NavGroup[];
+}
+
+// Helper function to check if item is accessible by role
+function isItemAccessible(item: NavMainItem | { roles?: Role[] }, userRole: Role): boolean {
+  if (!item.roles || item.roles.length === 0) {
+    return true; // If no roles specified, allow all (for backward compatibility)
+  }
+  return item.roles.includes(userRole);
 }
 
 const IsComingSoon = () => (
@@ -39,19 +49,22 @@ const NavItemExpanded = ({
   item,
   isActive,
   isSubmenuOpen,
+  filterSubItems,
 }: {
   item: NavMainItem;
   isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
   isSubmenuOpen: (subItems?: NavMainItem["subItems"]) => boolean;
+  filterSubItems: (subItems?: NavMainItem["subItems"]) => NavMainItem["subItems"] | undefined;
 }) => {
+  const filteredSubItems = filterSubItems(item.subItems);
   return (
-    <Collapsible key={item.title} asChild defaultOpen={isSubmenuOpen(item.subItems)} className="group/collapsible">
+    <Collapsible key={item.title} asChild defaultOpen={isSubmenuOpen(filteredSubItems)} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           {item.subItems ? (
             <SidebarMenuButton
               disabled={item.comingSoon}
-              isActive={isActive(item.url, item.subItems)}
+              isActive={isActive(item.url, filteredSubItems)}
               tooltip={item.title}
             >
               {item.icon && <item.icon />}
@@ -74,10 +87,10 @@ const NavItemExpanded = ({
             </SidebarMenuButton>
           )}
         </CollapsibleTrigger>
-        {item.subItems && (
+        {filteredSubItems && filteredSubItems.length > 0 && (
           <CollapsibleContent>
             <SidebarMenuSub>
-              {item.subItems.map((subItem) => (
+              {filteredSubItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.title}>
                   <SidebarMenuSubButton aria-disabled={subItem.comingSoon} isActive={isActive(subItem.url)} asChild>
                     <Link href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
@@ -99,10 +112,13 @@ const NavItemExpanded = ({
 const NavItemCollapsed = ({
   item,
   isActive,
+  filterSubItems,
 }: {
   item: NavMainItem;
   isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
+  filterSubItems: (subItems?: NavMainItem["subItems"]) => NavMainItem["subItems"] | undefined;
 }) => {
+  const filteredSubItems = filterSubItems(item.subItems);
   return (
     <SidebarMenuItem key={item.title}>
       <DropdownMenu>
@@ -110,7 +126,7 @@ const NavItemCollapsed = ({
           <SidebarMenuButton
             disabled={item.comingSoon}
             tooltip={item.title}
-            isActive={isActive(item.url, item.subItems)}
+            isActive={isActive(item.url, filteredSubItems)}
           >
             {item.icon && <item.icon />}
             <span>{item.title}</span>
@@ -118,7 +134,7 @@ const NavItemCollapsed = ({
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-50 space-y-1" side="right" align="start">
-          {item.subItems?.map((subItem) => (
+          {filteredSubItems?.map((subItem) => (
             <DropdownMenuItem key={subItem.title} asChild>
               <SidebarMenuSubButton
                 key={subItem.title}
@@ -144,6 +160,8 @@ const NavItemCollapsed = ({
 export function NavMain({ items }: NavMainProps) {
   const path = usePathname();
   const { state, isMobile } = useSidebar();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role || "USER";
 
   const isItemActive = (url: string, subItems?: NavMainItem["subItems"]) => {
     if (subItems?.length) {
@@ -154,6 +172,12 @@ export function NavMain({ items }: NavMainProps) {
 
   const isSubmenuOpen = (subItems?: NavMainItem["subItems"]) => {
     return subItems?.some((sub) => path.startsWith(sub.url)) ?? false;
+  };
+
+  // Filter subItems by role
+  const filterSubItems = (subItems?: NavMainItem["subItems"]) => {
+    if (!subItems) return undefined;
+    return subItems.filter((subItem) => isItemAccessible(subItem, userRole));
   };
 
   return (
@@ -210,11 +234,24 @@ export function NavMain({ items }: NavMainProps) {
                     );
                   }
                   // Otherwise, render the dropdown as before
-                  return <NavItemCollapsed key={item.title} item={item} isActive={isItemActive} />;
+                  return (
+                    <NavItemCollapsed
+                      key={item.title}
+                      item={item}
+                      isActive={isItemActive}
+                      filterSubItems={filterSubItems}
+                    />
+                  );
                 }
                 // Expanded view
                 return (
-                  <NavItemExpanded key={item.title} item={item} isActive={isItemActive} isSubmenuOpen={isSubmenuOpen} />
+                  <NavItemExpanded
+                    key={item.title}
+                    item={item}
+                    isActive={isItemActive}
+                    isSubmenuOpen={isSubmenuOpen}
+                    filterSubItems={filterSubItems}
+                  />
                 );
               })}
             </SidebarMenu>

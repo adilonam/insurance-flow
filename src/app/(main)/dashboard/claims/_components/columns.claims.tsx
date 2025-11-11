@@ -6,10 +6,27 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Claim } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
-// Claim type
-type ClaimWithRelations = Claim;
+// Claim type with relations
+type ClaimWithRelations = Prisma.ClaimGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+    partner: {
+      select: {
+        id: true;
+        name: true;
+        type: true;
+      };
+    };
+  };
+}>;
 
 type ClaimColumnsProps = {
   onDelete?: (id: string, clientName: string) => void;
@@ -86,6 +103,28 @@ export const getClaimColumns = (props?: ClaimColumnsProps): ColumnDef<ClaimWithR
     accessorKey: "tpiInsurerName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="TPI Insurer" />,
     cell: ({ row }) => <span>{row.original.tpiInsurerName || "-"}</span>,
+  },
+  {
+    accessorKey: "user",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="User" />,
+    cell: ({ row }) => (
+      <div className="flex flex-col">
+        <span className="font-medium">{row.original.user?.name || "-"}</span>
+        <span className="text-muted-foreground text-xs">{row.original.user?.email || ""}</span>
+      </div>
+    ),
+    enableSorting: false,
+  },
+  {
+    accessorKey: "partner",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Partner" />,
+    cell: ({ row }) => (
+      <div className="flex flex-col">
+        <span className="font-medium">{row.original.partner?.name || "-"}</span>
+        <span className="text-muted-foreground text-xs">{row.original.partner?.type || ""}</span>
+      </div>
+    ),
+    enableSorting: false,
   },
   {
     accessorKey: "createdAt",

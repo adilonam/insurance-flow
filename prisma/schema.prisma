@@ -68,6 +68,7 @@ model User {
   sessions      Session[]
   assignedCases Case[]    @relation("CaseAssignedTo")
   createdCases  Case[]    @relation("CaseCreatedBy")
+  claims        Claim[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -282,6 +283,7 @@ model Partner {
   vehicleInspection     ServiceProvider? @relation("VehicleInspection", fields: [vehicleInspectionId], references: [id], onDelete: SetNull)
 
   users     User[]
+  claims    Claim[]
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -328,7 +330,11 @@ model Claim {
   tpiInsurerName   String?
   tpiInsurerContact String?
 
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  partnerId        String
+  partner          Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt

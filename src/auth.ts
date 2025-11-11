@@ -6,6 +6,7 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { Role } from "@/generated/prisma/client";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -67,11 +68,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
       }
+
+      // Fetch user role from database and add to token
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true },
+        });
+
+        if (dbUser) {
+          token.role = dbUser.role;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.role = (token.role as Role) || "USER";
       }
       return session;
     },

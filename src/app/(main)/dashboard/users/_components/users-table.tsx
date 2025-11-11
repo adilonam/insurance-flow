@@ -149,8 +149,7 @@ export function UsersTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the user{" "}
-              <strong>{userToDelete?.name}</strong>.
+              This action cannot be undone. This will permanently delete the user <strong>{userToDelete?.name}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -167,4 +166,3 @@ export function UsersTable() {
     </Card>
   );
 }
-

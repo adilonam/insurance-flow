@@ -19,8 +19,10 @@ import {
   Building2,
   Handshake,
   FileText,
+  ClipboardList,
   type LucideIcon,
 } from "lucide-react";
+import { Role } from "@/generated/prisma/client";
 
 export interface NavSubItem {
   title: string;
@@ -29,6 +31,7 @@ export interface NavSubItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  roles?: Role[]; // Roles that can access this item
 }
 
 export interface NavMainItem {
@@ -39,6 +42,7 @@ export interface NavMainItem {
   comingSoon?: boolean;
   newTab?: boolean;
   isNew?: boolean;
+  roles?: Role[]; // Roles that can access this item
 }
 
 export interface NavGroup {
@@ -56,32 +60,43 @@ export const sidebarItems: NavGroup[] = [
         title: "Default",
         url: "/dashboard/default",
         icon: LayoutDashboard,
-        comingSoon: true,
+        roles: ["USER", "PARTNER", "ADMIN"],
       },
       {
         title: "Cases",
         url: "/dashboard/cases",
         icon: Briefcase,
+        roles: ["USER", "ADMIN"],
       },
       {
         title: "Claims",
         url: "/dashboard/claims",
         icon: FileText,
+        roles: ["PARTNER", "ADMIN"],
+      },
+      {
+        title: "Triage Claims",
+        url: "/dashboard/claims/triage",
+        icon: ClipboardList,
+        roles: ["ADMIN", "USER"],
       },
       {
         title: "Partner",
         url: "/dashboard/partners",
         icon: Handshake,
+        roles: ["ADMIN", "USER"],
       },
       {
         title: "ServiceProvider",
         url: "/dashboard/service-providers",
         icon: Building2,
+        roles: ["ADMIN", "USER"],
       },
       {
         title: "Users",
         url: "/dashboard/users",
         icon: Users,
+        roles: ["ADMIN", "USER"],
       },
 
       {
@@ -89,12 +104,14 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/coming-soon",
         icon: Gauge,
         comingSoon: true,
+        roles: ["ADMIN"],
       },
       {
         title: "Logistics",
         url: "/dashboard/coming-soon",
         icon: Forklift,
         comingSoon: true,
+        roles: ["ADMIN"],
       },
     ],
   },
@@ -107,18 +124,21 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/coming-soon",
         icon: Mail,
         comingSoon: true,
+        roles: ["USER", "PARTNER", "ADMIN"],
       },
       {
         title: "Chat",
         url: "/dashboard/coming-soon",
         icon: MessageSquare,
         comingSoon: true,
+        roles: ["USER", "PARTNER", "ADMIN"],
       },
       {
         title: "Roles",
         url: "/dashboard/coming-soon",
         icon: Lock,
         comingSoon: true,
+        roles: ["ADMIN"],
       },
     ],
   },
@@ -131,6 +151,7 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/coming-soon",
         icon: SquareArrowUpRight,
         comingSoon: true,
+        roles: ["ADMIN"],
       },
     ],
   },

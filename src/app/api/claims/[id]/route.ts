@@ -219,4 +219,3 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: "Failed to delete claim" }, { status: 500 });
   }
 }
-

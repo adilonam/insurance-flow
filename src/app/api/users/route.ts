@@ -6,11 +6,23 @@ import { auth } from "@/auth";
 import { Role } from "@/generated/prisma/client";
 
 const createUserSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
+  name: z
+    .preprocess(
+      (val) => (val === "" || val === null ? null : val),
+      z.union([z.string().min(1, "Name must be at least 1 character"), z.null()]),
+    )
+    .optional(),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z
+    .preprocess(
+      (val) => (val === "" || val === null ? null : val),
+      z.union([z.string().min(6, "Password must be at least 6 characters"), z.null()]),
+    )
+    .optional(),
   role: z.enum(["USER", "PARTNER", "ADMIN"]).optional(),
-  partnerId: z.string().optional(),
+  partnerId: z
+    .preprocess((val) => (val === "" || val === null ? null : val), z.union([z.string(), z.null()]))
+    .optional(),
 });
 
 // GET - List all users or search users by email
@@ -107,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        name: validatedData.name || null,
+        name: validatedData.name && validatedData.name.trim() !== "" ? validatedData.name : null,
         email: validatedData.email,
         password: hashedPassword,
         role: validatedData.role ? roleMap[validatedData.role] || Role.USER : Role.USER,

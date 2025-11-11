@@ -23,10 +23,27 @@ import { useDataTableInstance } from "@/hooks/use-data-table-instance";
 import { toast } from "sonner";
 
 import { getClaimColumns } from "./columns.claims";
-import { Claim } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
-// Claim type
-type ClaimWithRelations = Claim;
+// Claim type with relations
+type ClaimWithRelations = Prisma.ClaimGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+    partner: {
+      select: {
+        id: true;
+        name: true;
+        type: true;
+      };
+    };
+  };
+}>;
 
 export function ClaimsTable() {
   const [data, setData] = useState<ClaimWithRelations[]>([]);

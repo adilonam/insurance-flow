@@ -155,7 +155,7 @@ export function EditClaimForm({ id }: EditClaimFormProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground size-8 animate-spin" />
       </div>
     );
   }
@@ -290,7 +290,9 @@ export function EditClaimForm({ id }: EditClaimFormProps) {
                             <SelectItem value="IN_PROGRESS_SERVICES">In Progress - Services</SelectItem>
                             <SelectItem value="IN_PROGRESS_REPAIRS">In Progress - Repairs</SelectItem>
                             <SelectItem value="PENDING_OFFBOARDING">Pending Offboarding</SelectItem>
-                            <SelectItem value="PENDING_OFFBOARDING_NONCOOPERATIVE">Pending Offboarding - Non-Cooperative</SelectItem>
+                            <SelectItem value="PENDING_OFFBOARDING_NONCOOPERATIVE">
+                              Pending Offboarding - Non-Cooperative
+                            </SelectItem>
                             <SelectItem value="PAYMENT_PACK_PREPARATION">Payment Pack Preparation</SelectItem>
                             <SelectItem value="AWAITING_FINAL_PAYMENT">Awaiting Final Payment</SelectItem>
                             <SelectItem value="CLOSED">Closed</SelectItem>
@@ -570,4 +572,3 @@ export function EditClaimForm({ id }: EditClaimFormProps) {
     </div>
   );
 }
-

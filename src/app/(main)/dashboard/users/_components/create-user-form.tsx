@@ -80,14 +80,12 @@ export function CreateUserForm() {
         throw new Error("Failed to search partners");
       }
       const allPartners = await response.json();
-      
+
       // Filter partners by query if provided
       const filteredPartners = query.trim()
-        ? allPartners.filter((partner: Partner) =>
-            partner.name.toLowerCase().includes(query.toLowerCase())
-          )
+        ? allPartners.filter((partner: Partner) => partner.name.toLowerCase().includes(query.toLowerCase()))
         : allPartners;
-      
+
       setPartnerState((prev) => ({
         ...prev,
         partners: filteredPartners.slice(0, 10), // Limit to 10 results
@@ -402,4 +400,3 @@ export function CreateUserForm() {
     </div>
   );
 }
-

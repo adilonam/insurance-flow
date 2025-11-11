@@ -146,4 +146,3 @@ export const getUserColumns = (props?: UserColumnsProps): ColumnDef<UserWithRela
     enableSorting: false,
   },
 ];
-
