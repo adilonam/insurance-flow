@@ -1,12 +1,13 @@
-import { ChartAreaInteractive } from "./_components/chart-area-interactive";
-import { DataTable } from "./_components/data-table";
-import data from "./_components/data.json";
-import { SectionCards } from "./_components/section-cards";
+import { InternalDashboardHeader } from "./_components/internal-dashboard-header";
+import { ClaimWorkflowCards } from "./_components/claim-workflow-cards";
+import { TriageQueuePanel } from "./_components/triage-queue-panel";
 
 export default function Page() {
   return (
-    <div className="@container/main flex flex-col gap-4 md:gap-6">
-      <h1>Coming Soon</h1>
+    <div className="@container/main flex flex-col gap-6">
+      <InternalDashboardHeader />
+      <ClaimWorkflowCards />
+      <TriageQueuePanel />
     </div>
   );
 }
