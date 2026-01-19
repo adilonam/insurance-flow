@@ -20,7 +20,7 @@ export async function GET(
     // Get claim and verify user has access
     const claim = await prisma.claim.findUnique({
       where: { id },
-      select: { uploadedFileKey: true, userId: true },
+      select: { uploadedFileKey: true, uploadedFileName: true, userId: true },
     });
 
     if (!claim) {
@@ -54,8 +54,8 @@ export async function GET(
     }
     const buffer = Buffer.concat(chunks);
 
-    // Get original filename from metadata or extract from key
-    const originalName = response.Metadata?.originalName || claim.uploadedFileKey.split("/").pop() || "file";
+    // Get original filename from database, metadata, or extract from key
+    const originalName = claim.uploadedFileName || response.Metadata?.originalName || claim.uploadedFileKey.split("/").pop() || "file";
 
     // Return file with appropriate headers
     return new NextResponse(buffer, {

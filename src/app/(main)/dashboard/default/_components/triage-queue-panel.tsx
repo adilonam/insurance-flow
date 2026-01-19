@@ -83,7 +83,7 @@ function ClaimCard({ claim }: { claim: ClaimWithRelations }) {
           </Badge>
         </div>
         <Button variant="default" size="sm" asChild>
-          <Link href={`/dashboard/claims/${claim.id}/edit`}>
+          <Link href={`/preview/triage?id=${claim.id}`}>
             Review
             <ArrowRight className="ml-1 size-4" />
           </Link>

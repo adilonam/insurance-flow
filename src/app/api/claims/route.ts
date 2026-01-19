@@ -32,12 +32,6 @@ const createClaimSchema = z.object({
   thirdPartyName: z.string().optional().or(z.literal("")),
   thirdPartyVehicleRegistration: z.string().optional().or(z.literal("")),
   thirdPartyContactNumber: z.string().optional().or(z.literal("")),
-  additionalDriverName: z.string().optional().or(z.literal("")),
-  additionalDriverMobile: z.string().optional().or(z.literal("")),
-  additionalDriverDob: z.string().optional().or(z.literal("")),
-  additionalDriverPostCode: z.string().optional().or(z.literal("")),
-  tpiInsurerName: z.string().optional().or(z.literal("")),
-  tpiInsurerContact: z.string().optional().or(z.literal("")),
 });
 
 const updateClaimSchema = z.object({
@@ -190,34 +184,11 @@ export async function POST(request: NextRequest) {
           validatedData.thirdPartyContactNumber && validatedData.thirdPartyContactNumber.trim() !== ""
             ? validatedData.thirdPartyContactNumber
             : null,
-        additionalDriverName:
-          validatedData.additionalDriverName && validatedData.additionalDriverName.trim() !== ""
-            ? validatedData.additionalDriverName
-            : null,
-        additionalDriverMobile:
-          validatedData.additionalDriverMobile && validatedData.additionalDriverMobile.trim() !== ""
-            ? validatedData.additionalDriverMobile
-            : null,
-        additionalDriverDob:
-          validatedData.additionalDriverDob && validatedData.additionalDriverDob.trim() !== ""
-            ? new Date(validatedData.additionalDriverDob)
-            : null,
-        additionalDriverPostCode:
-          validatedData.additionalDriverPostCode && validatedData.additionalDriverPostCode.trim() !== ""
-            ? validatedData.additionalDriverPostCode
-            : null,
-        tpiInsurerName:
-          validatedData.tpiInsurerName && validatedData.tpiInsurerName.trim() !== ""
-            ? validatedData.tpiInsurerName
-            : null,
-        tpiInsurerContact:
-          validatedData.tpiInsurerContact && validatedData.tpiInsurerContact.trim() !== ""
-            ? validatedData.tpiInsurerContact
-            : null,
         uploadedFileKey:
           validatedData.uploadedFileKey && validatedData.uploadedFileKey.trim() !== ""
             ? validatedData.uploadedFileKey
             : null,
+        uploadedFileName: null, // Will be set when file is uploaded
         userId: user.id,
         partnerId: partnerId,
       },

@@ -60,13 +60,16 @@ export async function POST(request: NextRequest) {
       }),
     );
 
-    // If claimId is provided, update the claim with the file key
+    // If claimId is provided, update the claim with the file key and original filename
     // Otherwise, the file key will be associated when the claim is created
     if (claimId) {
       try {
         await prisma.claim.update({
           where: { id: claimId },
-          data: { uploadedFileKey: fileKey },
+          data: { 
+            uploadedFileKey: fileKey,
+            uploadedFileName: file.name,
+          },
         });
       } catch (error) {
         console.error("Error associating file with claim:", error);

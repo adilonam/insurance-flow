@@ -23,14 +23,10 @@ const updateClaimSchema = z.object({
     .optional(),
   clientName: z.string().min(1, "Client name is required").optional(),
   clientMobile: z.string().min(1, "Client mobile is required").optional(),
+  clientEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
   clientDob: z.string().min(1, "Client date of birth is required").optional(),
   clientPostCode: z.string().min(1, "Client post code is required").optional(),
-  additionalDriverName: z.string().optional().or(z.literal("")),
-  additionalDriverMobile: z.string().optional().or(z.literal("")),
-  additionalDriverDob: z.string().optional().or(z.literal("")),
-  additionalDriverPostCode: z.string().optional().or(z.literal("")),
-  tpiInsurerName: z.string().optional().or(z.literal("")),
-  tpiInsurerContact: z.string().optional().or(z.literal("")),
+  isPrivateHireDriver: z.string().optional().or(z.literal("")),
 });
 
 // GET - Get a claim by ID
@@ -106,14 +102,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       status?: ClaimStatus;
       clientName?: string;
       clientMobile?: string;
+      clientEmail?: string | null;
       clientDob?: Date;
       clientPostCode?: string;
-      additionalDriverName?: string | null;
-      additionalDriverMobile?: string | null;
-      additionalDriverDob?: Date | null;
-      additionalDriverPostCode?: string | null;
-      tpiInsurerName?: string | null;
-      tpiInsurerContact?: string | null;
+      isPrivateHireDriver?: string | null;
     } = {};
 
     if (validatedData.dateOfAccident !== undefined) {
@@ -137,40 +129,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (validatedData.clientPostCode !== undefined) {
       updateData.clientPostCode = validatedData.clientPostCode;
     }
-    if (validatedData.additionalDriverName !== undefined) {
-      updateData.additionalDriverName =
-        validatedData.additionalDriverName && validatedData.additionalDriverName.trim() !== ""
-          ? validatedData.additionalDriverName
+    if (validatedData.clientEmail !== undefined) {
+      updateData.clientEmail =
+        validatedData.clientEmail && validatedData.clientEmail.trim() !== ""
+          ? validatedData.clientEmail
           : null;
     }
-    if (validatedData.additionalDriverMobile !== undefined) {
-      updateData.additionalDriverMobile =
-        validatedData.additionalDriverMobile && validatedData.additionalDriverMobile.trim() !== ""
-          ? validatedData.additionalDriverMobile
-          : null;
-    }
-    if (validatedData.additionalDriverDob !== undefined) {
-      updateData.additionalDriverDob =
-        validatedData.additionalDriverDob && validatedData.additionalDriverDob.trim() !== ""
-          ? new Date(validatedData.additionalDriverDob)
-          : null;
-    }
-    if (validatedData.additionalDriverPostCode !== undefined) {
-      updateData.additionalDriverPostCode =
-        validatedData.additionalDriverPostCode && validatedData.additionalDriverPostCode.trim() !== ""
-          ? validatedData.additionalDriverPostCode
-          : null;
-    }
-    if (validatedData.tpiInsurerName !== undefined) {
-      updateData.tpiInsurerName =
-        validatedData.tpiInsurerName && validatedData.tpiInsurerName.trim() !== ""
-          ? validatedData.tpiInsurerName
-          : null;
-    }
-    if (validatedData.tpiInsurerContact !== undefined) {
-      updateData.tpiInsurerContact =
-        validatedData.tpiInsurerContact && validatedData.tpiInsurerContact.trim() !== ""
-          ? validatedData.tpiInsurerContact
+    if (validatedData.isPrivateHireDriver !== undefined) {
+      updateData.isPrivateHireDriver =
+        validatedData.isPrivateHireDriver && validatedData.isPrivateHireDriver.trim() !== ""
+          ? validatedData.isPrivateHireDriver
           : null;
     }
 

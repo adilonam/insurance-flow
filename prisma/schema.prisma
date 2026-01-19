@@ -13,7 +13,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Enums
@@ -335,14 +334,6 @@ model Claim {
   thirdPartyVehicleRegistration String?
   thirdPartyContactNumber String?
 
-  additionalDriverName   String?
-  additionalDriverMobile String?
-  additionalDriverDob    DateTime?
-  additionalDriverPostCode String?
-
-  tpiInsurerName   String?
-  tpiInsurerContact String?
-
   userId           String
   user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -350,6 +341,7 @@ model Claim {
   partner          Partner?    @relation(fields: [partnerId], references: [id], onDelete: SetNull)
 
   uploadedFileKey  String?      // S3 key for uploaded spreadsheet
+  uploadedFileName String?     // Original filename of uploaded file
 
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
