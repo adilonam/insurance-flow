@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, ArrowLeft, CalendarIcon } from "lucide-react";
+import { Loader2, ArrowLeft, CalendarIcon, Upload, Sparkles, Info, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -14,81 +14,215 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 // Schema for claim creation
 const createClaimSchema = z.object({
-  dateOfAccident: z.string().min(1, "Date of accident is required"),
   type: z.enum(["FAULT", "NON_FAULT"], {
     required_error: "Type is required",
   }),
-  status: z.enum(
-    [
-      "PENDING_TRIAGE",
-      "ACCEPTED",
-      "REJECTED",
-      "IN_PROGRESS_SERVICES",
-      "IN_PROGRESS_REPAIRS",
-      "PENDING_OFFBOARDING",
-      "PENDING_OFFBOARDING_NONCOOPERATIVE",
-      "PAYMENT_PACK_PREPARATION",
-      "AWAITING_FINAL_PAYMENT",
-      "CLOSED",
-    ],
-    {
-      required_error: "Status is required",
-    },
-  ),
-  clientName: z.string().min(1, "Client name is required"),
-  clientMobile: z.string().min(1, "Client mobile is required"),
-  clientDob: z.string().min(1, "Client date of birth is required"),
-  clientPostCode: z.string().min(1, "Client post code is required"),
-  additionalDriverName: z.string().optional().or(z.literal("")),
-  additionalDriverMobile: z.string().optional().or(z.literal("")),
-  additionalDriverDob: z.string().optional().or(z.literal("")),
-  additionalDriverPostCode: z.string().optional().or(z.literal("")),
-  tpiInsurerName: z.string().optional().or(z.literal("")),
-  tpiInsurerContact: z.string().optional().or(z.literal("")),
+  linkToPartner: z.boolean().default(false),
+  partnerId: z.string().optional(),
+  clientName: z.string().min(1, "Full name is required"),
+  clientDob: z.string().min(1, "Date of birth is required"),
+  clientMobile: z.string().min(1, "Mobile phone is required"),
+  clientEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
+  clientPostCode: z.string().min(1, "Postcode is required"),
+  vehicleRegistration: z.string().min(1, "Vehicle registration is required"),
+  isPrivateHireDriver: z.string().optional(),
+  dateOfAccident: z.string().min(1, "Date of accident is required"),
+  accidentTime: z.string().optional(),
+  accidentLocation: z.string().min(1, "Location is required"),
+  accidentCircumstances: z.string().min(1, "Circumstances are required"),
+  isVehicleDrivable: z.string().min(1, "Please specify if vehicle is drivable"),
+  thirdPartyName: z.string().optional().or(z.literal("")),
+  thirdPartyVehicleRegistration: z.string().optional().or(z.literal("")),
+  thirdPartyContactNumber: z.string().optional().or(z.literal("")),
 });
 
 type CreateClaimFormValues = z.infer<typeof createClaimSchema>;
 
+type Partner = {
+  id: string;
+  name: string;
+};
+
 export function CreateClaimForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Partner search states
+  const [partnerState, setPartnerState] = useState<{
+    open: boolean;
+    query: string;
+    partners: Partner[];
+    selected: Partner | null;
+    searching: boolean;
+  }>({
+    open: false,
+    query: "",
+    partners: [],
+    selected: null,
+    searching: false,
+  });
 
   const form = useForm<CreateClaimFormValues>({
     resolver: zodResolver(createClaimSchema),
     defaultValues: {
-      dateOfAccident: "",
       type: "NON_FAULT",
-      status: "PENDING_TRIAGE",
+      linkToPartner: false,
+      partnerId: "",
       clientName: "",
-      clientMobile: "",
       clientDob: "",
+      clientMobile: "",
+      clientEmail: "",
       clientPostCode: "",
-      additionalDriverName: "",
-      additionalDriverMobile: "",
-      additionalDriverDob: "",
-      additionalDriverPostCode: "",
-      tpiInsurerName: "",
-      tpiInsurerContact: "",
+      vehicleRegistration: "",
+      isPrivateHireDriver: "",
+      dateOfAccident: "",
+      accidentTime: "",
+      accidentLocation: "",
+      accidentCircumstances: "",
+      isVehicleDrivable: "",
+      thirdPartyName: "",
+      thirdPartyVehicleRegistration: "",
+      thirdPartyContactNumber: "",
     },
   });
+
+  const linkToPartner = form.watch("linkToPartner");
+
+  // Search partners
+  const searchPartners = useCallback(async (query: string) => {
+    setPartnerState((prev) => ({
+      ...prev,
+      searching: true,
+    }));
+
+    try {
+      const response = await fetch("/api/partners");
+      if (!response.ok) {
+        throw new Error("Failed to search partners");
+      }
+      const allPartners = await response.json();
+
+      // Filter partners by query if provided
+      const filteredPartners = query.trim()
+        ? allPartners.filter((partner: Partner) => partner.name.toLowerCase().includes(query.toLowerCase()))
+        : allPartners;
+
+      setPartnerState((prev) => ({
+        ...prev,
+        partners: filteredPartners.slice(0, 10), // Limit to 10 results
+        searching: false,
+      }));
+    } catch (error) {
+      console.error("Error searching partners:", error);
+      setPartnerState((prev) => ({
+        ...prev,
+        partners: [],
+        searching: false,
+      }));
+    }
+  }, []);
+
+  // Handle partner selection
+  const handlePartnerSelect = (partner: Partner) => {
+    setPartnerState((prev) => ({
+      ...prev,
+      selected: partner,
+      open: false,
+    }));
+    form.setValue("partnerId", partner.id);
+  };
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
+
+  // Handle file upload
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+    ];
+    const allowedExtensions = [".csv", ".xlsx", ".xls"];
+    const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      toast.error("Invalid file type. Only CSV and Excel files are allowed.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Upload file to S3/MinIO
+      const response = await fetch("/api/claims/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload file");
+      }
+
+      const result = await response.json();
+      setUploadedFileName(file.name);
+      setUploadedFileKey(result.fileKey);
+      toast.success(`File "${file.name}" uploaded successfully. It will be associated with the claim when you submit.`);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to upload file");
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const onSubmit = async (data: CreateClaimFormValues) => {
     try {
       setIsSubmitting(true);
+
+      // Only include partnerId if linkToPartner is true
+      const submitData = {
+        ...data,
+        partnerId: data.linkToPartner && data.partnerId ? data.partnerId : undefined,
+        status: "PENDING_TRIAGE",
+        uploadedFileKey: uploadedFileKey || undefined,
+      };
 
       const response = await fetch("/api/claims", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
@@ -108,9 +242,9 @@ export function CreateClaimForm() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <div className="flex h-screen flex-col">
+      {/* Header - Fixed */}
+      <div className="flex items-center gap-4 border-b bg-background px-6 py-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/claims">
             <ArrowLeft className="size-4" />
@@ -118,94 +252,94 @@ export function CreateClaimForm() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Create Claim</h1>
-          <p className="text-muted-foreground">Add a new claim to the system</p>
+          <h1 className="text-2xl font-bold">Submit Direct Internal Claim</h1>
+          <p className="text-sm text-muted-foreground">Create a claim directly (not from partner portal)</p>
         </div>
       </div>
 
-      {/* Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Claim Details</CardTitle>
-          <CardDescription>Enter the information for the new claim</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Scrollable Form Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl space-y-6 p-6">
+          {/* AI-Powered Quick Upload Section */}
+          <Card className="border-purple-500">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 size-5 text-purple-600" />
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-semibold">AI-Powered Quick Upload</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Upload a spreadsheet (CSV, Excel) with claim data and let AI automatically extract and prefill the
+                    form below.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleFileUpload}
+                    disabled={isUploading}
+                    className="mt-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 size-4" />
+                        Upload Spreadsheet
+                      </>
+                    )}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                  />
+                  {uploadedFileName && (
+                    <div className="mt-2 rounded-md bg-green-50 p-2 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                      ✓ File uploaded: {uploadedFileName}
+                    </div>
+                  )}
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Sparkles className="size-3" />
+                    File will be saved and associated with the claim for later download.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Direct Internal Submission Info */}
+          <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <Info className="size-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-900 dark:text-blue-100">
+              Direct Internal Submission: Use this form when receiving claims directly from clients (phone, walk-in,
+              etc.) rather than through a partner portal. You can optionally link the claim to a partner for commission
+              tracking.
+            </AlertDescription>
+          </Alert>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Accident Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Accident Information</h3>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="dateOfAccident"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of Accident *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? (
-                                  (() => {
-                                    try {
-                                      const date = new Date(field.value);
-                                      return isNaN(date.getTime()) ? <span>Pick a date</span> : format(date, "PPP");
-                                    } catch {
-                                      return <span>Pick a date</span>;
-                                    }
-                                  })()
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              captionLayout="dropdown"
-                              fromYear={1900}
-                              toYear={2100}
-                              selected={
-                                field.value
-                                  ? (() => {
-                                      try {
-                                        const date = new Date(field.value);
-                                        return isNaN(date.getTime()) ? undefined : date;
-                                      } catch {
-                                        return undefined;
-                                      }
-                                    })()
-                                  : undefined
-                              }
-                              onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+              {/* Claim Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Claim Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Claim Type *</FormLabel>
+                        <FormLabel>Claim Type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder="Select claim type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -220,76 +354,283 @@ export function CreateClaimForm() {
 
                   <FormField
                     control={form.control}
-                    name="status"
+                    name="linkToPartner"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Link this claim to a partner (optional)</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {linkToPartner && (
+                    <FormField
+                      control={form.control}
+                      name="partnerId"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Partner</FormLabel>
+                          <Popover
+                            open={partnerState.open}
+                            onOpenChange={(open) => {
+                              setPartnerState((prev) => ({ ...prev, open }));
+                              if (open && partnerState.partners.length === 0) {
+                                searchPartners("");
+                              }
+                            }}
+                          >
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !partnerState.selected && "text-muted-foreground",
+                                  )}
+                                  type="button"
+                                >
+                                  {partnerState.selected ? partnerState.selected.name : "Search partner..."}
+                                  <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                              <Command>
+                                <CommandInput
+                                  placeholder="Search partner..."
+                                  value={partnerState.query}
+                                  onValueChange={(value) => {
+                                    setPartnerState((prev) => ({ ...prev, query: value }));
+                                    searchPartners(value);
+                                  }}
+                                />
+                                <CommandList>
+                                  {partnerState.searching ? (
+                                    <div className="flex items-center justify-center py-4">
+                                      <Loader2 className="size-4 animate-spin" />
+                                    </div>
+                                  ) : partnerState.partners.length === 0 ? (
+                                    <CommandEmpty>No partners found.</CommandEmpty>
+                                  ) : (
+                                    <CommandGroup>
+                                      {partnerState.partners.map((partner) => (
+                                        <CommandItem
+                                          key={partner.id}
+                                          value={partner.id}
+                                          onSelect={() => handlePartnerSelect(partner)}
+                                        >
+                                          {partner.name}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  )}
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Client Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Client Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="clientName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Full Name <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="clientDob"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>
+                            Date of Birth <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground",
+                                  )}
+                                >
+                                  {field.value ? (
+                                    (() => {
+                                      try {
+                                        const date = new Date(field.value);
+                                        return isNaN(date.getTime()) ? (
+                                          <span>dd/mm/yyyy</span>
+                                        ) : (
+                                          format(date, "dd/MM/yyyy")
+                                        );
+                                      } catch {
+                                        return <span>dd/mm/yyyy</span>;
+                                      }
+                                    })()
+                                  ) : (
+                                    <span>dd/mm/yyyy</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={2100}
+                                selected={
+                                  field.value
+                                    ? (() => {
+                                        try {
+                                          const date = new Date(field.value);
+                                          return isNaN(date.getTime()) ? undefined : date;
+                                        } catch {
+                                          return undefined;
+                                        }
+                                      })()
+                                    : undefined
+                                }
+                                onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="clientMobile"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Mobile Phone <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter mobile number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="clientEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="Enter email address" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="clientPostCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Postcode <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter postcode" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="vehicleRegistration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Vehicle Registration <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter vehicle registration" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="isPrivateHireDriver"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Is the driver a Private Hire or Public Hire driver?</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder="Select" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="PENDING_TRIAGE">Pending Triage</SelectItem>
-                            <SelectItem value="ACCEPTED">Accepted</SelectItem>
-                            <SelectItem value="REJECTED">Rejected</SelectItem>
-                            <SelectItem value="IN_PROGRESS_SERVICES">In Progress - Services</SelectItem>
-                            <SelectItem value="IN_PROGRESS_REPAIRS">In Progress - Repairs</SelectItem>
-                            <SelectItem value="PENDING_OFFBOARDING">Pending Offboarding</SelectItem>
-                            <SelectItem value="PENDING_OFFBOARDING_NONCOOPERATIVE">
-                              Pending Offboarding - Non-Cooperative
-                            </SelectItem>
-                            <SelectItem value="PAYMENT_PACK_PREPARATION">Payment Pack Preparation</SelectItem>
-                            <SelectItem value="AWAITING_FINAL_PAYMENT">Awaiting Final Payment</SelectItem>
-                            <SelectItem value="CLOSED">Closed</SelectItem>
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Yes">Yes</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
-              {/* Client Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Client Information</h3>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Accident Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Accident Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="clientName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter client name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clientMobile"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client Mobile *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter mobile number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="clientDob"
+                    name="dateOfAccident"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Client Date of Birth *</FormLabel>
+                        <FormLabel>
+                          Date of Accident <span className="text-destructive">*</span>
+                        </FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -304,13 +645,17 @@ export function CreateClaimForm() {
                                   (() => {
                                     try {
                                       const date = new Date(field.value);
-                                      return isNaN(date.getTime()) ? <span>Pick a date</span> : format(date, "PPP");
+                                      return isNaN(date.getTime()) ? (
+                                        <span>dd/mm/yyyy</span>
+                                      ) : (
+                                        format(date, "dd/MM/yyyy")
+                                      );
                                     } catch {
-                                      return <span>Pick a date</span>;
+                                      return <span>dd/mm/yyyy</span>;
                                     }
                                   })()
                                 ) : (
-                                  <span>Pick a date</span>
+                                  <span>dd/mm/yyyy</span>
                                 )}
                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                               </Button>
@@ -346,32 +691,12 @@ export function CreateClaimForm() {
 
                   <FormField
                     control={form.control}
-                    name="clientPostCode"
+                    name="accidentTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Client Post Code *</FormLabel>
+                        <FormLabel>Time</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter post code" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Additional Driver Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Additional Driver Information (Optional)</h3>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="additionalDriverName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional Driver Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter additional driver name" {...field} />
+                          <Input type="time" placeholder="--:--" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -380,12 +705,14 @@ export function CreateClaimForm() {
 
                   <FormField
                     control={form.control}
-                    name="additionalDriverMobile"
+                    name="accidentLocation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional Driver Mobile</FormLabel>
+                        <FormLabel>
+                          Location <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter mobile number" {...field} />
+                          <Input placeholder="Street address or intersection" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -394,92 +721,18 @@ export function CreateClaimForm() {
 
                   <FormField
                     control={form.control}
-                    name="additionalDriverDob"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Additional Driver Date of Birth</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? (
-                                  (() => {
-                                    try {
-                                      const date = new Date(field.value);
-                                      return isNaN(date.getTime()) ? <span>Pick a date</span> : format(date, "PPP");
-                                    } catch {
-                                      return <span>Pick a date</span>;
-                                    }
-                                  })()
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              captionLayout="dropdown"
-                              fromYear={1900}
-                              toYear={2100}
-                              selected={
-                                field.value
-                                  ? (() => {
-                                      try {
-                                        const date = new Date(field.value);
-                                        return isNaN(date.getTime()) ? undefined : date;
-                                      } catch {
-                                        return undefined;
-                                      }
-                                    })()
-                                  : undefined
-                              }
-                              onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="additionalDriverPostCode"
+                    name="accidentCircumstances"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Additional Driver Post Code</FormLabel>
+                        <FormLabel>
+                          Circumstances <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter post code" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* TPI Insurer Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">TPI Insurer Information (Optional)</h3>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="tpiInsurerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>TPI Insurer Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter TPI insurer name" {...field} />
+                          <Textarea
+                            placeholder="Provide a detailed description of how the accident occurred..."
+                            className="min-h-24 resize-y"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -488,34 +741,94 @@ export function CreateClaimForm() {
 
                   <FormField
                     control={form.control}
-                    name="tpiInsurerContact"
+                    name="isVehicleDrivable"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>TPI Insurer Contact</FormLabel>
+                        <FormLabel>
+                          Is the vehicle drivable/fit to be driven on the road? <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Yes">Yes</SelectItem>
+                            <SelectItem value="No">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Third Party Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Third Party Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="thirdPartyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter contact information" {...field} />
+                          <Input placeholder="Enter third party name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-              </div>
 
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-4">
+                  <FormField
+                    control={form.control}
+                    name="thirdPartyVehicleRegistration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vehicle Registration</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter vehicle registration" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="thirdPartyContactNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter contact number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Form Actions - Fixed at bottom */}
+              <div className="flex items-center justify-end gap-4 border-t bg-background pb-6 pt-4">
                 <Button type="button" variant="outline" asChild>
                   <Link href="/dashboard/claims">Cancel</Link>
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                  Create Claim
+                  Submit Claim
                 </Button>
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

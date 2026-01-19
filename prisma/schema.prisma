@@ -287,6 +287,8 @@ model Partner {
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([id])
 }
 
 
@@ -299,15 +301,13 @@ enum ClaimType {
 
 enum ClaimStatus {
   PENDING_TRIAGE
-  ACCEPTED
-  REJECTED
-  IN_PROGRESS_SERVICES   // Services active (e.g. hire ongoing)
-  IN_PROGRESS_REPAIRS    // CIL received, repairs booked
-  PENDING_OFFBOARDING    // Hire ended, collating final docs
-  PENDING_OFFBOARDING_NONCOOPERATIVE // Client is unresponsive
-  PAYMENT_PACK_PREPARATION // Offboarding complete, final billing
-  AWAITING_FINAL_PAYMENT    // Pack sent to TPI
-  CLOSED
+  PENDING_FINANCIAL
+  PENDING_LIVE_CLAIMS
+  PENDING_OS_DOCS
+  PENDING_PAYMENT_PACK_REVIEW
+  PENDING_SENT_TO_TP
+  PENDING_SENT_TO_SOLS
+  PENDING_ISSUED
 }
 
 // Supports document storage + nested relations for outlays and documents
@@ -319,8 +319,21 @@ model Claim {
 
   clientName       String
   clientMobile     String
+  clientEmail      String?
   clientDob        DateTime
   clientPostCode   String
+  vehicleRegistration String
+
+  isPrivateHireDriver String? // "Yes", "No", or null
+
+  accidentTime     String?
+  accidentLocation String
+  accidentCircumstances String @db.Text
+  isVehicleDrivable String // "Yes" or "No"
+
+  thirdPartyName   String?
+  thirdPartyVehicleRegistration String?
+  thirdPartyContactNumber String?
 
   additionalDriverName   String?
   additionalDriverMobile String?
@@ -333,8 +346,10 @@ model Claim {
   userId           String
   user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  partnerId        String
-  partner          Partner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId        String?
+  partner          Partner?    @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+
+  uploadedFileKey  String?      // S3 key for uploaded spreadsheet
 
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt

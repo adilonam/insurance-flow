@@ -10,6 +10,7 @@ import {
   Scale,
   FileCheck,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +25,10 @@ type WorkflowCard = {
   iconColor?: string;
 };
 
-const workflowCards: WorkflowCard[] = [
+const workflowCardsTemplate: Omit<WorkflowCard, "count">[] = [
   {
     id: "triage",
     title: "Triage",
-    count: 0,
     icon: Clock,
     variant: "highlight",
     borderColor: "border-orange-500",
@@ -38,7 +38,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "financial",
     title: "Financial",
-    count: 0,
     icon: DollarSign,
     variant: "border",
     borderColor: "border-purple-400",
@@ -47,7 +46,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "live-claims",
     title: "Live Claims",
-    count: 9,
     icon: Activity,
     variant: "border",
     borderColor: "border-sky-300",
@@ -56,7 +54,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "os-docs",
     title: "OS Docs",
-    count: 0,
     icon: ArrowRightSquare,
     variant: "border",
     borderColor: "border-orange-500",
@@ -65,7 +62,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "pp-review",
     title: "PP Review",
-    count: 1,
     icon: Wallet,
     variant: "border",
     borderColor: "border-green-500",
@@ -74,7 +70,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "sent-to-tp",
     title: "Sent to TP",
-    count: 0,
     icon: Send,
     variant: "border",
     borderColor: "border-sky-300",
@@ -83,7 +78,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "sent-to-sols",
     title: "Sent to Sols",
-    count: 2,
     icon: Scale,
     variant: "border",
     borderColor: "border-purple-400",
@@ -92,7 +86,6 @@ const workflowCards: WorkflowCard[] = [
   {
     id: "issued",
     title: "Issued",
-    count: 0,
     icon: FileCheck,
     variant: "border",
     borderColor: "border-emerald-300",
@@ -101,6 +94,30 @@ const workflowCards: WorkflowCard[] = [
 ];
 
 export function ClaimWorkflowCards() {
+  const [triageCount, setTriageCount] = useState(0);
+
+  useEffect(() => {
+    const fetchTriageCount = async () => {
+      try {
+        const response = await fetch("/api/claims");
+        if (response.ok) {
+          const claims = await response.json();
+          const triageClaims = claims.filter((claim: { status: string }) => claim.status === "PENDING_TRIAGE");
+          setTriageCount(triageClaims.length);
+        }
+      } catch (error) {
+        console.error("Error fetching triage count:", error);
+      }
+    };
+
+    fetchTriageCount();
+  }, []);
+
+  const workflowCards: WorkflowCard[] = workflowCardsTemplate.map((card) => ({
+    ...card,
+    count: card.id === "triage" ? triageCount : 0, // For now, only triage is dynamic
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-sm font-semibold uppercase text-foreground">CLAIM WORKFLOWS:</h2>
