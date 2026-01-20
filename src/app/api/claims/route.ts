@@ -32,6 +32,7 @@ const createClaimSchema = z.object({
   thirdPartyName: z.string().optional().or(z.literal("")),
   thirdPartyVehicleRegistration: z.string().optional().or(z.literal("")),
   thirdPartyContactNumber: z.string().optional().or(z.literal("")),
+  uploadedFileKey: z.string().optional().or(z.literal("")),
 });
 
 const updateClaimSchema = z.object({

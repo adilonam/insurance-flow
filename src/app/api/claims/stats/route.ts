@@ -22,15 +22,13 @@ export async function GET(request: NextRequest) {
     // Initialize stats object with all possible statuses
     const statusCounts: Record<ClaimStatus, number> = {
       PENDING_TRIAGE: 0,
-      ACCEPTED: 0,
-      REJECTED: 0,
-      IN_PROGRESS_SERVICES: 0,
-      IN_PROGRESS_REPAIRS: 0,
-      PENDING_OFFBOARDING: 0,
-      PENDING_OFFBOARDING_NONCOOPERATIVE: 0,
-      PAYMENT_PACK_PREPARATION: 0,
-      AWAITING_FINAL_PAYMENT: 0,
-      CLOSED: 0,
+      PENDING_FINANCIAL: 0,
+      PENDING_LIVE_CLAIMS: 0,
+      PENDING_OS_DOCS: 0,
+      PENDING_PAYMENT_PACK_REVIEW: 0,
+      PENDING_SENT_TO_TP: 0,
+      PENDING_SENT_TO_SOLS: 0,
+      PENDING_ISSUED: 0,
     };
 
     // Count claims by status
