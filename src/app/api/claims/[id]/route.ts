@@ -10,15 +10,13 @@ const updateClaimSchema = z.object({
   status: z
     .enum([
       "PENDING_TRIAGE",
-      "ACCEPTED",
-      "REJECTED",
-      "IN_PROGRESS_SERVICES",
-      "IN_PROGRESS_REPAIRS",
-      "PENDING_OFFBOARDING",
-      "PENDING_OFFBOARDING_NONCOOPERATIVE",
-      "PAYMENT_PACK_PREPARATION",
-      "AWAITING_FINAL_PAYMENT",
-      "CLOSED",
+      "PENDING_FINANCIAL",
+      "PENDING_LIVE_CLAIMS",
+      "PENDING_OS_DOCS",
+      "PENDING_PAYMENT_PACK_REVIEW",
+      "PENDING_SENT_TO_TP",
+      "PENDING_SENT_TO_SOLS",
+      "PENDING_ISSUED",
     ])
     .optional(),
   clientName: z.string().min(1, "Client name is required").optional(),
@@ -97,15 +95,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const statusMap: Record<string, ClaimStatus> = {
       PENDING_TRIAGE: ClaimStatus.PENDING_TRIAGE,
-      ACCEPTED: ClaimStatus.ACCEPTED,
-      REJECTED: ClaimStatus.REJECTED,
-      IN_PROGRESS_SERVICES: ClaimStatus.IN_PROGRESS_SERVICES,
-      IN_PROGRESS_REPAIRS: ClaimStatus.IN_PROGRESS_REPAIRS,
-      PENDING_OFFBOARDING: ClaimStatus.PENDING_OFFBOARDING,
-      PENDING_OFFBOARDING_NONCOOPERATIVE: ClaimStatus.PENDING_OFFBOARDING_NONCOOPERATIVE,
-      PAYMENT_PACK_PREPARATION: ClaimStatus.PAYMENT_PACK_PREPARATION,
-      AWAITING_FINAL_PAYMENT: ClaimStatus.AWAITING_FINAL_PAYMENT,
-      CLOSED: ClaimStatus.CLOSED,
+      PENDING_FINANCIAL: ClaimStatus.PENDING_FINANCIAL,
+      PENDING_LIVE_CLAIMS: ClaimStatus.PENDING_LIVE_CLAIMS,
+      PENDING_OS_DOCS: ClaimStatus.PENDING_OS_DOCS,
+      PENDING_PAYMENT_PACK_REVIEW: ClaimStatus.PENDING_PAYMENT_PACK_REVIEW,
+      PENDING_SENT_TO_TP: ClaimStatus.PENDING_SENT_TO_TP,
+      PENDING_SENT_TO_SOLS: ClaimStatus.PENDING_SENT_TO_SOLS,
+      PENDING_ISSUED: ClaimStatus.PENDING_ISSUED,
     };
 
     const updateData: {

@@ -11,6 +11,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -93,30 +94,65 @@ const workflowCardsTemplate: Omit<WorkflowCard, "count">[] = [
   },
 ];
 
-export function ClaimWorkflowCards() {
-  const [triageCount, setTriageCount] = useState(0);
+// Map card IDs to their corresponding claim statuses
+const statusMap: Record<string, string> = {
+  triage: "PENDING_TRIAGE",
+  financial: "PENDING_FINANCIAL",
+  "live-claims": "PENDING_LIVE_CLAIMS",
+  "os-docs": "PENDING_OS_DOCS",
+  "pp-review": "PENDING_PAYMENT_PACK_REVIEW",
+  "sent-to-tp": "PENDING_SENT_TO_TP",
+  "sent-to-sols": "PENDING_SENT_TO_SOLS",
+  issued: "PENDING_ISSUED",
+};
+
+type ClaimWorkflowCardsProps = {
+  selectedStatus?: string;
+  onStatusChange?: (status: string) => void;
+};
+
+export function ClaimWorkflowCards({ selectedStatus, onStatusChange }: ClaimWorkflowCardsProps) {
+  const router = useRouter();
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const fetchTriageCount = async () => {
+    const fetchClaimCounts = async () => {
       try {
         const response = await fetch("/api/claims");
         if (response.ok) {
           const claims = await response.json();
-          const triageClaims = claims.filter((claim: { status: string }) => claim.status === "PENDING_TRIAGE");
-          setTriageCount(triageClaims.length);
+          const counts: Record<string, number> = {};
+
+          // Count claims by status
+          claims.forEach((claim: { status: string }) => {
+            counts[claim.status] = (counts[claim.status] || 0) + 1;
+          });
+
+          setStatusCounts(counts);
         }
       } catch (error) {
-        console.error("Error fetching triage count:", error);
+        console.error("Error fetching claim counts:", error);
       }
     };
 
-    fetchTriageCount();
+    fetchClaimCounts();
   }, []);
 
-  const workflowCards: WorkflowCard[] = workflowCardsTemplate.map((card) => ({
-    ...card,
-    count: card.id === "triage" ? triageCount : 0, // For now, only triage is dynamic
-  }));
+  const handleCardClick = (cardId: string) => {
+    const status = statusMap[cardId];
+    if (status) {
+      onStatusChange?.(status);
+    }
+  };
+
+  const workflowCards: WorkflowCard[] = workflowCardsTemplate.map((card) => {
+    const status = statusMap[card.id];
+    const count = status ? statusCounts[status] || 0 : 0;
+    return {
+      ...card,
+      count,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,12 +163,15 @@ export function ClaimWorkflowCards() {
           return (
             <Card
               key={card.id}
+              onClick={() => handleCardClick(card.id)}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 p-4 transition-colors",
+                "flex flex-col items-center justify-center gap-2 p-4 transition-colors cursor-pointer",
                 // Override default bg-card for highlighted cards
                 card.variant === "highlight" && "!bg-orange-500 border-2 border-orange-500 text-white",
                 card.variant === "border" && card.borderColor && "border bg-white dark:bg-card",
                 card.variant === "border" && "hover:bg-gray-50 dark:hover:bg-accent",
+                // Highlight selected card
+                statusMap[card.id] === selectedStatus && card.variant === "border" && "ring-2 ring-offset-2 ring-purple-500",
               )}
             >
               <Icon className={cn("size-6", card.iconColor || (card.variant === "highlight" ? "text-white" : "text-foreground"))} />

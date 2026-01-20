@@ -36,6 +36,15 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { QuickAccessHeader } from "../_components/quick-access-header";
 import { cn } from "@/lib/utils";
 
 type Claim = Prisma.ClaimGetPayload<{
@@ -132,6 +141,8 @@ export default function TriagePreviewPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [showAcceptDialog, setShowAcceptDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Split client name into first name and surname for display
@@ -260,6 +271,38 @@ export default function TriagePreviewPage() {
     }
   };
 
+  const handleAcceptClaim = async () => {
+    if (!claimId) return;
+
+    try {
+      setIsAccepting(true);
+      const response = await fetch(`/api/claims/${claimId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "PENDING_FINANCIAL",
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to accept claim");
+      }
+
+      toast.success("Claim accepted and moved to Financial");
+      router.push("/dashboard/default");
+      router.refresh();
+    } catch (err) {
+      console.error("Error accepting claim:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to accept claim");
+    } finally {
+      setIsAccepting(false);
+      setShowAcceptDialog(false);
+    }
+  };
+
   const handleFileUpload = () => {
     fileInputRef.current?.click();
   };
@@ -360,13 +403,7 @@ export default function TriagePreviewPage() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Quick Access Bar */}
-        <div className="flex items-center gap-2 border-b pb-3">
-          <span className="text-sm text-muted-foreground">QUICK ACCESS:</span>
-          <Button variant="outline" size="sm" className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
-            <FileText className="mr-2 size-4" />
-            Triage
-          </Button>
-        </div>
+        {claimId && <QuickAccessHeader claimId={claimId} currentView="triage" />}
 
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -420,9 +457,25 @@ export default function TriagePreviewPage() {
               <X className="mr-2 size-4" />
               Reject
             </Button>
-            <Button type="button" variant="default" size="sm" className="bg-green-600 hover:bg-green-700">
-              <Users className="mr-2 size-4" />
-              Accept Claim
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => setShowAcceptDialog(true)}
+              disabled={isAccepting}
+            >
+              {isAccepting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Accepting...
+                </>
+              ) : (
+                <>
+                  <Users className="mr-2 size-4" />
+                  Accept Claim
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -892,6 +945,44 @@ export default function TriagePreviewPage() {
           </div>
         </div>
       </form>
+
+      {/* Accept Claim Confirmation Dialog */}
+      <Dialog open={showAcceptDialog} onOpenChange={setShowAcceptDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Accept Claim</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to accept this claim? This will move it to the Financial stage and it will appear on the dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowAcceptDialog(false)}
+              disabled={isAccepting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleAcceptClaim}
+              disabled={isAccepting}
+            >
+              {isAccepting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Accepting...
+                </>
+              ) : (
+                "Accept Claim"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }
