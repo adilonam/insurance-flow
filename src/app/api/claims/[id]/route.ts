@@ -42,6 +42,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const claim = await prisma.claim.findUnique({
       where: { id },
+      include: {
+        partner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            address: true,
+            type: true,
+          },
+        },
+      },
     });
 
     if (!claim) {
@@ -145,6 +157,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const claim = await prisma.claim.update({
       where: { id },
       data: updateData,
+      include: {
+        partner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            address: true,
+            type: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(claim);

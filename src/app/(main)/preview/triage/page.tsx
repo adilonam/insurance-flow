@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
@@ -38,7 +38,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-type Claim = Prisma.ClaimGetPayload<{}>;
+type Claim = Prisma.ClaimGetPayload<{
+  include: {
+    partner: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+        phone: true;
+        address: true;
+        type: true;
+      };
+    };
+  };
+}>;
 
 // Form schema
 const claimFormSchema = z.object({
@@ -110,6 +123,7 @@ function calculateProgress(claim: Claim) {
 }
 
 export default function TriagePreviewPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const claimId = searchParams.get("id");
   const [claim, setClaim] = useState<Claim | null>(null);
@@ -357,10 +371,8 @@ export default function TriagePreviewPage() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" type="button" asChild>
-              <Link href="/dashboard/claims">
-                <ArrowLeft className="size-4" />
-              </Link>
+            <Button variant="ghost" size="icon" type="button" onClick={() => router.back()}>
+              <ArrowLeft className="size-4" />
             </Button>
             <div>
               <h1 className="text-3xl font-bold">Triage Assessment</h1>
@@ -429,6 +441,13 @@ export default function TriagePreviewPage() {
             <span className="text-sm font-medium">Time in Triage</span>
             <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
               {timeInTriage}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border bg-card px-4 py-3">
+            <Users className="size-5 text-muted-foreground" />
+            <span className="text-sm font-medium">Partner</span>
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+              {claim.partner ? claim.partner.name : "No Partner"}
             </Badge>
           </div>
         </div>
@@ -805,6 +824,54 @@ export default function TriagePreviewPage() {
                 <p className="text-xs text-muted-foreground">
                   Supported formats: CSV, Excel (.xlsx, .xls)
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Partner Information */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Users className="size-5" />
+                  <CardTitle>Partner Information</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {claim.partner ? (
+                  <>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Name</p>
+                        <p className="text-sm font-medium">{claim.partner.name}</p>
+                      </div>
+                      {claim.partner.type && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Type</p>
+                          <p className="text-sm">{claim.partner.type.replace("_", " ")}</p>
+                        </div>
+                      )}
+                      {claim.partner.email && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Email</p>
+                          <p className="text-sm">{claim.partner.email}</p>
+                        </div>
+                      )}
+                      {claim.partner.phone && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Phone</p>
+                          <p className="text-sm">{claim.partner.phone}</p>
+                        </div>
+                      )}
+                      {claim.partner.address && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Address</p>
+                          <p className="text-sm">{claim.partner.address}</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No partner linked to this claim.</p>
+                )}
               </CardContent>
             </Card>
 

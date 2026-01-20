@@ -231,7 +231,7 @@ export function CreateClaimForm() {
       }
 
       toast.success("Claim created successfully");
-      router.push("/dashboard/claims");
+      router.push("/dashboard/default");
       router.refresh();
     } catch (error) {
       console.error("Error creating claim:", error);
@@ -245,11 +245,9 @@ export function CreateClaimForm() {
     <div className="flex h-screen flex-col">
       {/* Header - Fixed */}
       <div className="flex items-center gap-4 border-b bg-background px-6 py-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/claims">
-            <ArrowLeft className="size-4" />
-            <span className="sr-only">Back to claims</span>
-          </Link>
+        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="size-4" />
+          <span className="sr-only">Back to claims</span>
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Submit Direct Internal Claim</h1>
@@ -817,8 +815,8 @@ export function CreateClaimForm() {
 
               {/* Form Actions - Fixed at bottom */}
               <div className="flex items-center justify-end gap-4 border-t bg-background pb-6 pt-4">
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/dashboard/claims">Cancel</Link>
+                <Button type="button" variant="outline" onClick={() => router.back()}>
+                  Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
