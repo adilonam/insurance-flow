@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     const randomId = randomBytes(16).toString("hex");
     const timestamp = Date.now();
     const fileKey = claimId 
-      ? `claims/${claimId}/${randomId}.${fileExtension}`
-      : `claims/pending/${timestamp}-${randomId}.${fileExtension}`;
+      ? `claims/triage/${claimId}/${timestamp}-${randomId}.${fileExtension}`
+      : `claims/triage/pending/${timestamp}-${randomId}.${fileExtension}`;
 
     // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();

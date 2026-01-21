@@ -343,8 +343,63 @@ model Claim {
   uploadedFileKey  String?      // S3 key for uploaded spreadsheet
   uploadedFileName String?     // Original filename of uploaded file
 
+  financialStep   FinancialStep?
+
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+}
+
+// Financial Step - One-to-one with Claim
+model FinancialStep {
+  id        String   @id @default(cuid())
+  claimId   String   @unique
+  claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  bankAccounts BankAccount[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Bank Account - Many-to-one with FinancialStep
+model BankAccount {
+  id                String         @id @default(cuid())
+  financialStepId    String
+  financialStep     FinancialStep  @relation(fields: [financialStepId], references: [id], onDelete: Cascade)
+
+  bankName          String?
+  accountNumber     String?
+  accountType       String?
+  last4             String?        // Last 4 digits of account
+  balance           Decimal?       @db.Decimal(10, 2)
+  overdraftLimit    Decimal?       @db.Decimal(10, 2) // O/D Limit
+  overdraftUsed     Decimal?       @db.Decimal(10, 2)
+  status            String?
+
+  bankStatements    BankStatement[]
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([financialStepId])
+}
+
+// Bank Statement - Many-to-one with BankAccount
+model BankStatement {
+  id            String       @id @default(cuid())
+  bankAccountId String
+  bankAccount   BankAccount  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  startDate     DateTime     // Statement start date
+  endDate       DateTime     // Statement end date
+  fileKey       String?      // S3 key for uploaded statement (claims/financial/...)
+  fileName      String?      // Original filename
+  uploadedAt    DateTime?    // When the statement was uploaded
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([bankAccountId])
 }
 
 

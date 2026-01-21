@@ -47,6 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { QuickAccessHeader } from "../_components/quick-access-header";
+import { BankAccountsForm } from "./_components/bank-accounts-form";
 import { cn } from "@/lib/utils";
 
 type Claim = Prisma.ClaimGetPayload<{
@@ -108,6 +109,8 @@ export default function FinancialPreviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [showBankAccountsForm, setShowBankAccountsForm] = useState(false);
+  const [bankAccountsCount, setBankAccountsCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isagiReportUploaded, setIsagiReportUploaded] = useState(false);
   const [reportDate, setReportDate] = useState<string | null>(null);
@@ -146,7 +149,24 @@ export default function FinancialPreviewPage() {
       }
     };
 
+    const fetchBankAccountsCount = async () => {
+      try {
+        const response = await fetch(`/api/claims/${claimId}/financial-step`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.bankAccounts) {
+            setBankAccountsCount(data.bankAccounts.length);
+          } else {
+            setBankAccountsCount(0);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching bank accounts count:", error);
+      }
+    };
+
     fetchClaim();
+    fetchBankAccountsCount();
   }, [claimId]);
 
   const onSubmit = async (data: FinancialFormValues) => {
@@ -489,20 +509,39 @@ export default function FinancialPreviewPage() {
 
             {/* Manage Bank Accounts */}
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <Building2 className="size-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Manage Bank Accounts</p>
-                    <p className="text-sm text-muted-foreground">
-                      Click to view and manage current accounts and bank statements
-                    </p>
-                    <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                      11 items extracted
-                    </Badge>
+              <CardContent className="p-6">
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setShowBankAccountsForm(!showBankAccountsForm)}
+                >
+                  <div className="flex items-center gap-4">
+                    <Building2 className="size-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Manage Bank Accounts</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click to view and manage current accounts and bank statements
+                      </p>
+                      <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {bankAccountsCount} {bankAccountsCount === 1 ? "item" : "items"} extracted
+                      </Badge>
+                    </div>
                   </div>
+                  <ArrowLeft
+                    className={cn(
+                      "size-5 rotate-180 text-muted-foreground transition-transform",
+                      showBankAccountsForm && "rotate-90",
+                    )}
+                  />
                 </div>
-                <ArrowLeft className="size-5 rotate-180 text-muted-foreground" />
+                {showBankAccountsForm && claimId && claim && (
+                  <div className="mt-6">
+                    <BankAccountsForm
+                      claimId={claimId}
+                      accidentDate={new Date(claim.dateOfAccident)}
+                      onAccountsChange={(count) => setBankAccountsCount(count)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -713,6 +752,7 @@ export default function FinancialPreviewPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </Form>
   );
 }
