@@ -358,6 +358,12 @@ model FinancialStep {
   bankAccounts BankAccount[]
   creditCards CreditCard[]
   loans Loan[]
+  hirePurchaseAgreements HirePurchaseAgreement[]
+  mortgages Mortgage[]
+
+  creditCardInterest String?      // Yes/No - Does the client pay interest on credit cards
+  financialAssessment String?    // Pending/Approved/Rejected
+  assessmentNotes String?        // Additional notes about the financial assessment
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -458,9 +464,39 @@ model Loan {
   @@index([financialStepId])
 }
 
+// Hire Purchase Agreement - Many-to-one with FinancialStep
+model HirePurchaseAgreement {
+  id                String         @id @default(cuid())
+  financialStepId    String
+  financialStep     FinancialStep  @relation(fields: [financialStepId], references: [id], onDelete: Cascade)
 
+  lender            String?        // Lender name
+  balance           Decimal?       @db.Decimal(10, 2)
+  monthlyPayment    Decimal?       @db.Decimal(10, 2)
+  status            String?        // Active, Delinquent, Settled
 
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
+  @@index([financialStepId])
+}
+
+// Mortgage - Many-to-one with FinancialStep
+model Mortgage {
+  id                String         @id @default(cuid())
+  financialStepId    String
+  financialStep     FinancialStep  @relation(fields: [financialStepId], references: [id], onDelete: Cascade)
+
+  lender            String?        // Lender name
+  balance           Decimal?       @db.Decimal(10, 2)
+  monthlyPayment    Decimal?       @db.Decimal(10, 2)
+  status            String?        // Active, Delinquent, Settled
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([financialStepId])
+}
 
 
 

@@ -45,6 +45,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdAt: "asc",
           },
         },
+        hirePurchaseAgreements: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+        mortgages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
@@ -66,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
     const body = await request.json();
-    const { bankAccounts, creditCards, loans } = body;
+    const { bankAccounts, creditCards, loans, hirePurchaseAgreements, mortgages, creditCardInterest, financialAssessment, assessmentNotes } = body;
 
     // Check if claim exists
     const claim = await prisma.claim.findUnique({
@@ -86,8 +96,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       financialStep = await prisma.financialStep.create({
         data: {
           claimId: id,
+          creditCardInterest: creditCardInterest || null,
+          financialAssessment: financialAssessment || null,
+          assessmentNotes: assessmentNotes || null,
         },
       });
+    } else {
+      // Update existing financial step with new fields if provided
+      const updateData: any = {};
+      if (creditCardInterest !== undefined) updateData.creditCardInterest = creditCardInterest || null;
+      if (financialAssessment !== undefined) updateData.financialAssessment = financialAssessment || null;
+      if (assessmentNotes !== undefined) updateData.assessmentNotes = assessmentNotes || null;
+      
+      if (Object.keys(updateData).length > 0) {
+        financialStep = await prisma.financialStep.update({
+          where: { id: financialStep.id },
+          data: updateData,
+        });
+      }
     }
 
     // Only update the types that are provided in the request
@@ -169,6 +195,54 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
+    // Update hire purchase agreements only if provided in request body
+    if (hirePurchaseAgreements !== undefined) {
+      // Delete existing hire purchase agreements
+      await prisma.hirePurchaseAgreement.deleteMany({
+        where: { financialStepId: financialStep.id },
+      });
+
+      // Create new hire purchase agreements (even if empty array to clear all)
+      if (Array.isArray(hirePurchaseAgreements)) {
+        if (hirePurchaseAgreements.length > 0) {
+          await prisma.hirePurchaseAgreement.createMany({
+            data: hirePurchaseAgreements.map((agreement: any) => ({
+              financialStepId: financialStep.id,
+              lender: agreement.lender || null,
+              balance: agreement.balance ? parseFloat(agreement.balance.toString()) : null,
+              monthlyPayment: agreement.monthlyPayment ? parseFloat(agreement.monthlyPayment.toString()) : null,
+              status: agreement.status || null,
+            })),
+          });
+        }
+        // If empty array, we've already deleted all, so nothing to create
+      }
+    }
+
+    // Update mortgages only if provided in request body
+    if (mortgages !== undefined) {
+      // Delete existing mortgages
+      await prisma.mortgage.deleteMany({
+        where: { financialStepId: financialStep.id },
+      });
+
+      // Create new mortgages (even if empty array to clear all)
+      if (Array.isArray(mortgages)) {
+        if (mortgages.length > 0) {
+          await prisma.mortgage.createMany({
+            data: mortgages.map((mortgage: any) => ({
+              financialStepId: financialStep.id,
+              lender: mortgage.lender || null,
+              balance: mortgage.balance ? parseFloat(mortgage.balance.toString()) : null,
+              monthlyPayment: mortgage.monthlyPayment ? parseFloat(mortgage.monthlyPayment.toString()) : null,
+              status: mortgage.status || null,
+            })),
+          });
+        }
+        // If empty array, we've already deleted all, so nothing to create
+      }
+    }
+
     // Return updated financial step with bank accounts and credit cards
     const updatedFinancialStep = await prisma.financialStep.findUnique({
       where: { id: financialStep.id },
@@ -202,6 +276,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             createdAt: "asc",
           },
         },
+        hirePurchaseAgreements: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+        mortgages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
@@ -209,5 +293,43 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   } catch (error) {
     console.error("Error saving financial step:", error);
     return NextResponse.json({ error: "Failed to save financial step" }, { status: 500 });
+  }
+}
+
+// DELETE - Delete financial step
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Check if claim exists
+    const claim = await prisma.claim.findUnique({
+      where: { id },
+    });
+
+    if (!claim) {
+      return NextResponse.json({ error: "Claim not found" }, { status: 404 });
+    }
+
+    // Find and delete financial step (cascade will handle related records)
+    const financialStep = await prisma.financialStep.findUnique({
+      where: { claimId: id },
+    });
+
+    if (financialStep) {
+      await prisma.financialStep.delete({
+        where: { id: financialStep.id },
+      });
+    }
+
+    return NextResponse.json({ success: true, message: "Financial step deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting financial step:", error);
+    return NextResponse.json({ error: "Failed to delete financial step" }, { status: 500 });
   }
 }

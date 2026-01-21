@@ -51,6 +51,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             type: true,
           },
         },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -162,6 +169,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             phone: true,
             address: true,
             type: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },

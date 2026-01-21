@@ -50,6 +50,8 @@ import { QuickAccessHeader } from "../_components/quick-access-header";
 import { BankAccountsForm } from "./_components/bank-accounts-form";
 import { CreditCardsForm } from "./_components/credit-cards-form";
 import { LoansForm } from "./_components/loans-form";
+import { HirePurchaseForm } from "./_components/hire-purchase-form";
+import { MortgagesForm } from "./_components/mortgages-form";
 import { cn } from "@/lib/utils";
 
 type Claim = Prisma.ClaimGetPayload<{
@@ -111,12 +113,20 @@ export default function FinancialPreviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [showSendBackDialog, setShowSendBackDialog] = useState(false);
+  const [isSendingBack, setIsSendingBack] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [showBankAccountsForm, setShowBankAccountsForm] = useState(false);
   const [bankAccountsCount, setBankAccountsCount] = useState(0);
   const [showCreditCardsForm, setShowCreditCardsForm] = useState(false);
   const [creditCardsCount, setCreditCardsCount] = useState(0);
   const [showLoansForm, setShowLoansForm] = useState(false);
   const [loansCount, setLoansCount] = useState(0);
+  const [showHirePurchaseForm, setShowHirePurchaseForm] = useState(false);
+  const [hirePurchaseCount, setHirePurchaseCount] = useState(0);
+  const [showMortgagesForm, setShowMortgagesForm] = useState(false);
+  const [mortgagesCount, setMortgagesCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isagiReportUploaded, setIsagiReportUploaded] = useState(false);
   const [reportDate, setReportDate] = useState<string | null>(null);
@@ -126,7 +136,7 @@ export default function FinancialPreviewPage() {
     defaultValues: {
       hasIsagiCheck: "",
       creditCardInterest: "",
-      financialAssessment: "Pending",
+      financialAssessment: "",
       assessmentNotes: "",
     },
   });
@@ -175,6 +185,22 @@ export default function FinancialPreviewPage() {
           } else {
             setLoansCount(0);
           }
+          if (data && data.hirePurchaseAgreements) {
+            setHirePurchaseCount(data.hirePurchaseAgreements.length);
+          } else {
+            setHirePurchaseCount(0);
+          }
+          if (data && data.mortgages) {
+            setMortgagesCount(data.mortgages.length);
+          } else {
+            setMortgagesCount(0);
+          }
+          // Load form values from financial step
+          if (data) {
+            form.setValue("creditCardInterest", data.creditCardInterest || "");
+            form.setValue("financialAssessment", data.financialAssessment || "");
+            form.setValue("assessmentNotes", data.assessmentNotes || "");
+          }
         }
       } catch (error) {
         console.error("Error fetching bank accounts count:", error);
@@ -195,6 +221,66 @@ export default function FinancialPreviewPage() {
     } catch (err) {
       console.error("Error saving financial assessment:", err);
       toast.error(err instanceof Error ? err.message : "Failed to save financial assessment");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveCreditCardInterest = async () => {
+    if (!claimId) return;
+
+    try {
+      setIsSaving(true);
+      const creditCardInterest = form.getValues("creditCardInterest");
+      const response = await fetch(`/api/claims/${claimId}/financial-step`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          creditCardInterest,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save credit card interest");
+      }
+
+      toast.success("Credit card interest saved successfully");
+    } catch (err) {
+      console.error("Error saving credit card interest:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to save credit card interest");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveImpecuniosityRating = async () => {
+    if (!claimId) return;
+
+    try {
+      setIsSaving(true);
+      const financialAssessment = form.getValues("financialAssessment");
+      const assessmentNotes = form.getValues("assessmentNotes");
+      const response = await fetch(`/api/claims/${claimId}/financial-step`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          financialAssessment,
+          assessmentNotes,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save impecuniosity rating");
+      }
+
+      toast.success("Impecuniosity rating saved successfully");
+    } catch (err) {
+      console.error("Error saving impecuniosity rating:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to save impecuniosity rating");
     } finally {
       setIsSaving(false);
     }
@@ -261,7 +347,20 @@ export default function FinancialPreviewPage() {
     if (!claimId) return;
 
     try {
-      const response = await fetch(`/api/claims/${claimId}`, {
+      setIsSendingBack(true);
+      
+      // Delete financial step
+      const deleteResponse = await fetch(`/api/claims/${claimId}/financial-step`, {
+        method: "DELETE",
+      });
+
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        // 404 is okay if financial step doesn't exist
+        throw new Error("Failed to delete financial step");
+      }
+
+      // Update claim status to PENDING_TRIAGE
+      const updateResponse = await fetch(`/api/claims/${claimId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -271,8 +370,8 @@ export default function FinancialPreviewPage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send back to triage");
+      if (!updateResponse.ok) {
+        throw new Error("Failed to update claim status");
       }
 
       toast.success("Claim sent back to Triage");
@@ -281,6 +380,52 @@ export default function FinancialPreviewPage() {
     } catch (err) {
       console.error("Error sending back to triage:", err);
       toast.error(err instanceof Error ? err.message : "Failed to send back to triage");
+    } finally {
+      setIsSendingBack(false);
+      setShowSendBackDialog(false);
+    }
+  };
+
+  const handleRejectClaim = async () => {
+    if (!claimId) return;
+
+    try {
+      setIsRejecting(true);
+      
+      // Delete financial step
+      const deleteResponse = await fetch(`/api/claims/${claimId}/financial-step`, {
+        method: "DELETE",
+      });
+
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        // 404 is okay if financial step doesn't exist
+        throw new Error("Failed to delete financial step");
+      }
+
+      // Update claim status to PENDING_TRIAGE
+      const updateResponse = await fetch(`/api/claims/${claimId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "PENDING_TRIAGE",
+        }),
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error("Failed to reject claim");
+      }
+
+      toast.success("Claim rejected and sent back to Triage");
+      router.push("/dashboard/default");
+      router.refresh();
+    } catch (err) {
+      console.error("Error rejecting claim:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to reject claim");
+    } finally {
+      setIsRejecting(false);
+      setShowRejectDialog(false);
     }
   };
 
@@ -630,31 +775,67 @@ export default function FinancialPreviewPage() {
 
             {/* Manage Hire Purchase Agreements */}
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <ShoppingCart className="size-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Manage Hire Purchase Agreements</p>
-                    <p className="text-sm text-muted-foreground">
-                      Click to view and manage hire purchase agreements
-                    </p>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowHirePurchaseForm(!showHirePurchaseForm)}>
+                  <div className="flex items-center gap-4">
+                    <ShoppingCart className="size-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Manage Hire Purchase Agreements</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click to view and manage hire purchase agreements
+                      </p>
+                      <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {hirePurchaseCount} {hirePurchaseCount === 1 ? "item" : "items"} extracted
+                      </Badge>
+                    </div>
                   </div>
+                  <ArrowLeft
+                    className={cn(
+                      "size-5 rotate-180 text-muted-foreground transition-transform",
+                      showHirePurchaseForm && "rotate-90",
+                    )}
+                  />
                 </div>
-                <ArrowLeft className="size-5 rotate-180 text-muted-foreground" />
+                {showHirePurchaseForm && claimId && (
+                  <div className="mt-6">
+                    <HirePurchaseForm
+                      claimId={claimId}
+                      onAgreementsChange={(count) => setHirePurchaseCount(count)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Manage Mortgages */}
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <Home className="size-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Manage Mortgages</p>
-                    <p className="text-sm text-muted-foreground">Click to view and manage mortgages</p>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowMortgagesForm(!showMortgagesForm)}>
+                  <div className="flex items-center gap-4">
+                    <Home className="size-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Manage Mortgages</p>
+                      <p className="text-sm text-muted-foreground">Click to view and manage mortgages</p>
+                      <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {mortgagesCount} {mortgagesCount === 1 ? "item" : "items"} extracted
+                      </Badge>
+                    </div>
                   </div>
+                  <ArrowLeft
+                    className={cn(
+                      "size-5 rotate-180 text-muted-foreground transition-transform",
+                      showMortgagesForm && "rotate-90",
+                    )}
+                  />
                 </div>
-                <ArrowLeft className="size-5 rotate-180 text-muted-foreground" />
+                {showMortgagesForm && claimId && (
+                  <div className="mt-6">
+                    <MortgagesForm
+                      claimId={claimId}
+                      onMortgagesChange={(count) => setMortgagesCount(count)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -666,7 +847,7 @@ export default function FinancialPreviewPage() {
                   <CardTitle>Credit Card Interest</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
                   name="creditCardInterest"
@@ -688,6 +869,18 @@ export default function FinancialPreviewPage() {
                     </FormItem>
                   )}
                 />
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveCreditCardInterest} disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -706,16 +899,17 @@ export default function FinancialPreviewPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Financial Assessment</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || "Pending"}>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="Not Impecunious">Not Impecunious</SelectItem>
+                          <SelectItem value="Impecunious">Impecunious</SelectItem>
                           <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Approved">Approved</SelectItem>
-                          <SelectItem value="Rejected">Rejected</SelectItem>
+                          <SelectItem value="Unknown">Unknown</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -739,6 +933,18 @@ export default function FinancialPreviewPage() {
                     </FormItem>
                   )}
                 />
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveImpecuniosityRating} disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -746,11 +952,22 @@ export default function FinancialPreviewPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 border-t pt-6">
-          <Button type="button" variant="outline" onClick={handleSendBackToTriage} className="bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/20">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setShowSendBackDialog(true)} 
+            className="bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/20"
+            disabled={isSendingBack || isRejecting || isApproving}
+          >
             <RotateCcw className="mr-2 size-4" />
             Send Back to Triage
           </Button>
-          <Button type="button" variant="destructive">
+          <Button 
+            type="button" 
+            variant="destructive"
+            onClick={() => setShowRejectDialog(true)}
+            disabled={isSendingBack || isRejecting || isApproving}
+          >
             <X className="mr-2 size-4" />
             Reject Claim
           </Button>
@@ -759,12 +976,78 @@ export default function FinancialPreviewPage() {
             variant="default"
             className="bg-green-600 hover:bg-green-700"
             onClick={() => setShowApproveDialog(true)}
+            disabled={isSendingBack || isRejecting || isApproving}
           >
             <Check className="mr-2 size-4" />
             Approve & Move to Live Queue
           </Button>
         </div>
       </form>
+
+      {/* Send Back to Triage Confirmation Dialog */}
+      <Dialog open={showSendBackDialog} onOpenChange={setShowSendBackDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send Back to Triage</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to send this claim back to Triage? This will delete the financial assessment data and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowSendBackDialog(false)} disabled={isSendingBack}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              className="bg-yellow-600 hover:bg-yellow-700"
+              onClick={handleSendBackToTriage}
+              disabled={isSendingBack}
+            >
+              {isSendingBack ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Back to Triage"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Claim Confirmation Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Claim</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject this claim? This will delete the financial assessment data and send the claim back to Triage. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowRejectDialog(false)} disabled={isRejecting}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleRejectClaim}
+              disabled={isRejecting}
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Rejecting...
+                </>
+              ) : (
+                "Reject Claim"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Approve Confirmation Dialog */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
