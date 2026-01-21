@@ -40,6 +40,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdAt: "asc",
           },
         },
+        loans: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
     const body = await request.json();
-    const { bankAccounts, creditCards } = body;
+    const { bankAccounts, creditCards, loans } = body;
 
     // Check if claim exists
     const claim = await prisma.claim.findUnique({
@@ -85,45 +90,83 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     }
 
-    // Delete existing bank accounts
-    await prisma.bankAccount.deleteMany({
-      where: { financialStepId: financialStep.id },
-    });
+    // Only update the types that are provided in the request
+    // This prevents deleting unrelated data when updating one type
 
-    // Delete existing credit cards
-    await prisma.creditCard.deleteMany({
-      where: { financialStepId: financialStep.id },
-    });
-
-    // Create new bank accounts
-    if (bankAccounts && Array.isArray(bankAccounts) && bankAccounts.length > 0) {
-      await prisma.bankAccount.createMany({
-        data: bankAccounts.map((account: any) => ({
-          financialStepId: financialStep.id,
-          bankName: account.bankName || null,
-          accountNumber: account.accountNumber || null,
-          accountType: account.accountType || null,
-          last4: account.last4 || null,
-          balance: account.balance ? parseFloat(account.balance.toString()) : null,
-          overdraftLimit: account.overdraftLimit ? parseFloat(account.overdraftLimit.toString()) : null,
-          overdraftUsed: account.overdraftUsed ? parseFloat(account.overdraftUsed.toString()) : null,
-          status: account.status || null,
-        })),
+    // Update bank accounts only if provided in request body
+    if (bankAccounts !== undefined) {
+      // Delete existing bank accounts
+      await prisma.bankAccount.deleteMany({
+        where: { financialStepId: financialStep.id },
       });
+
+      // Create new bank accounts (even if empty array to clear all)
+      if (Array.isArray(bankAccounts)) {
+        if (bankAccounts.length > 0) {
+          await prisma.bankAccount.createMany({
+            data: bankAccounts.map((account: any) => ({
+              financialStepId: financialStep.id,
+              bankName: account.bankName || null,
+              accountNumber: account.accountNumber || null,
+              accountType: account.accountType || null,
+              last4: account.last4 || null,
+              balance: account.balance ? parseFloat(account.balance.toString()) : null,
+              overdraftLimit: account.overdraftLimit ? parseFloat(account.overdraftLimit.toString()) : null,
+              overdraftUsed: account.overdraftUsed ? parseFloat(account.overdraftUsed.toString()) : null,
+              status: account.status || null,
+            })),
+          });
+        }
+        // If empty array, we've already deleted all, so nothing to create
+      }
     }
 
-    // Create new credit cards
-    if (creditCards && Array.isArray(creditCards) && creditCards.length > 0) {
-      await prisma.creditCard.createMany({
-        data: creditCards.map((card: any) => ({
-          financialStepId: financialStep.id,
-          issuer: card.issuer || null,
-          last4: card.last4 || null,
-          balance: card.balance ? parseFloat(card.balance.toString()) : null,
-          limit: card.limit ? parseFloat(card.limit.toString()) : null,
-          status: card.status || null,
-        })),
+    // Update credit cards only if provided in request body
+    if (creditCards !== undefined) {
+      // Delete existing credit cards
+      await prisma.creditCard.deleteMany({
+        where: { financialStepId: financialStep.id },
       });
+
+      // Create new credit cards (even if empty array to clear all)
+      if (Array.isArray(creditCards)) {
+        if (creditCards.length > 0) {
+          await prisma.creditCard.createMany({
+            data: creditCards.map((card: any) => ({
+              financialStepId: financialStep.id,
+              issuer: card.issuer || null,
+              last4: card.last4 || null,
+              balance: card.balance ? parseFloat(card.balance.toString()) : null,
+              limit: card.limit ? parseFloat(card.limit.toString()) : null,
+              status: card.status || null,
+            })),
+          });
+        }
+        // If empty array, we've already deleted all, so nothing to create
+      }
+    }
+
+    // Update loans only if provided in request body
+    if (loans !== undefined) {
+      // Delete existing loans
+      await prisma.loan.deleteMany({
+        where: { financialStepId: financialStep.id },
+      });
+
+      // Create new loans (even if empty array to clear all)
+      if (Array.isArray(loans)) {
+        if (loans.length > 0) {
+          await prisma.loan.createMany({
+            data: loans.map((loan: any) => ({
+              financialStepId: financialStep.id,
+              lender: loan.lender || null,
+              balance: loan.balance ? parseFloat(loan.balance.toString()) : null,
+              status: loan.status || null,
+            })),
+          });
+        }
+        // If empty array, we've already deleted all, so nothing to create
+      }
     }
 
     // Return updated financial step with bank accounts and credit cards
@@ -150,6 +193,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               },
             },
           },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+        loans: {
           orderBy: {
             createdAt: "asc",
           },

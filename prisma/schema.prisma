@@ -357,6 +357,7 @@ model FinancialStep {
 
   bankAccounts BankAccount[]
   creditCards CreditCard[]
+  loans Loan[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -439,6 +440,22 @@ model CardStatement {
   updatedAt     DateTime     @updatedAt
 
   @@index([creditCardId])
+}
+
+// Loan - Many-to-one with FinancialStep
+model Loan {
+  id                String         @id @default(cuid())
+  financialStepId    String
+  financialStep     FinancialStep  @relation(fields: [financialStepId], references: [id], onDelete: Cascade)
+
+  lender            String?        // Lender name
+  balance           Decimal?       @db.Decimal(10, 2)
+  status            String?        // Active, Delinquent, Settled
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([financialStepId])
 }
 
 

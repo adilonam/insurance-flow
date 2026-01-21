@@ -49,6 +49,7 @@ import {
 import { QuickAccessHeader } from "../_components/quick-access-header";
 import { BankAccountsForm } from "./_components/bank-accounts-form";
 import { CreditCardsForm } from "./_components/credit-cards-form";
+import { LoansForm } from "./_components/loans-form";
 import { cn } from "@/lib/utils";
 
 type Claim = Prisma.ClaimGetPayload<{
@@ -114,6 +115,8 @@ export default function FinancialPreviewPage() {
   const [bankAccountsCount, setBankAccountsCount] = useState(0);
   const [showCreditCardsForm, setShowCreditCardsForm] = useState(false);
   const [creditCardsCount, setCreditCardsCount] = useState(0);
+  const [showLoansForm, setShowLoansForm] = useState(false);
+  const [loansCount, setLoansCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isagiReportUploaded, setIsagiReportUploaded] = useState(false);
   const [reportDate, setReportDate] = useState<string | null>(null);
@@ -166,6 +169,11 @@ export default function FinancialPreviewPage() {
             setCreditCardsCount(data.creditCards.length);
           } else {
             setCreditCardsCount(0);
+          }
+          if (data && data.loans) {
+            setLoansCount(data.loans.length);
+          } else {
+            setLoansCount(0);
           }
         }
       } catch (error) {
@@ -590,18 +598,33 @@ export default function FinancialPreviewPage() {
 
             {/* Manage Unsecured Loans */}
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <FileCheck className="size-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Manage Unsecured Loans</p>
-                    <p className="text-sm text-muted-foreground">Click to view and manage unsecured loans</p>
-                    <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                      1 item extracted
-                    </Badge>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowLoansForm(!showLoansForm)}>
+                  <div className="flex items-center gap-4">
+                    <FileCheck className="size-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Manage Unsecured Loans</p>
+                      <p className="text-sm text-muted-foreground">Click to view and manage unsecured loans</p>
+                      <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {loansCount} {loansCount === 1 ? "item" : "items"} extracted
+                      </Badge>
+                    </div>
                   </div>
+                  <ArrowLeft
+                    className={cn(
+                      "size-5 rotate-180 text-muted-foreground transition-transform",
+                      showLoansForm && "rotate-90",
+                    )}
+                  />
                 </div>
-                <ArrowLeft className="size-5 rotate-180 text-muted-foreground" />
+                {showLoansForm && claimId && (
+                  <div className="mt-6">
+                    <LoansForm
+                      claimId={claimId}
+                      onLoansChange={(count) => setLoansCount(count)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
