@@ -403,7 +403,7 @@ export default function TriagePreviewPage() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Quick Access Bar */}
-        {claimId && <QuickAccessHeader claimId={claimId} currentView="triage" />}
+        {claimId && claim && <QuickAccessHeader claimId={claimId} claimStatus={claim.status} currentView="triage" />}
 
         {/* Header */}
         <div className="flex items-start justify-between">

@@ -276,7 +276,7 @@ export default function FinancialPreviewPage() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Quick Access Bar */}
-        {claimId && <QuickAccessHeader claimId={claimId} currentView="financial" />}
+        {claimId && claim && <QuickAccessHeader claimId={claimId} claimStatus={claim.status} currentView="financial" />}
 
         {/* Header */}
         <div className="flex items-start justify-between">
