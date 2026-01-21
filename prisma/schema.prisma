@@ -356,6 +356,7 @@ model FinancialStep {
   claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
   bankAccounts BankAccount[]
+  creditCards CreditCard[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -400,6 +401,44 @@ model BankStatement {
   updatedAt     DateTime     @updatedAt
 
   @@index([bankAccountId])
+}
+
+// Credit Card - Many-to-one with FinancialStep
+model CreditCard {
+  id                String         @id @default(cuid())
+  financialStepId    String
+  financialStep     FinancialStep  @relation(fields: [financialStepId], references: [id], onDelete: Cascade)
+
+  issuer            String?        // Card issuer (e.g., Visa, Mastercard, Store name)
+  last4             String?        // Last 4 digits of card
+  balance           Decimal?       @db.Decimal(10, 2)
+  limit             Decimal?       @db.Decimal(10, 2) // Credit limit
+  status            String?        // Active, Delinquent, Settled
+
+  cardStatements    CardStatement[]
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([financialStepId])
+}
+
+// Card Statement - Many-to-one with CreditCard
+model CardStatement {
+  id            String       @id @default(cuid())
+  creditCardId String
+  creditCard   CreditCard  @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+
+  startDate     DateTime     // Statement start date
+  endDate       DateTime     // Statement end date
+  fileKey       String?      // S3 key for uploaded statement (claims/financial/...)
+  fileName      String?      // Original filename
+  uploadedAt    DateTime?    // When the statement was uploaded
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([creditCardId])
 }
 
 

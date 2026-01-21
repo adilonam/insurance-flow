@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { QuickAccessHeader } from "../_components/quick-access-header";
 import { BankAccountsForm } from "./_components/bank-accounts-form";
+import { CreditCardsForm } from "./_components/credit-cards-form";
 import { cn } from "@/lib/utils";
 
 type Claim = Prisma.ClaimGetPayload<{
@@ -111,6 +112,8 @@ export default function FinancialPreviewPage() {
   const [isApproving, setIsApproving] = useState(false);
   const [showBankAccountsForm, setShowBankAccountsForm] = useState(false);
   const [bankAccountsCount, setBankAccountsCount] = useState(0);
+  const [showCreditCardsForm, setShowCreditCardsForm] = useState(false);
+  const [creditCardsCount, setCreditCardsCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isagiReportUploaded, setIsagiReportUploaded] = useState(false);
   const [reportDate, setReportDate] = useState<string | null>(null);
@@ -158,6 +161,11 @@ export default function FinancialPreviewPage() {
             setBankAccountsCount(data.bankAccounts.length);
           } else {
             setBankAccountsCount(0);
+          }
+          if (data && data.creditCards) {
+            setCreditCardsCount(data.creditCards.length);
+          } else {
+            setCreditCardsCount(0);
           }
         }
       } catch (error) {
@@ -547,20 +555,36 @@ export default function FinancialPreviewPage() {
 
             {/* Manage Credit/Store Cards */}
             <Card className="border-dashed">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <CreditCard className="size-6 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Manage Credit/Store Cards</p>
-                    <p className="text-sm text-muted-foreground">
-                      Click to view and manage credit and store cards
-                    </p>
-                    <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                      8 items extracted
-                    </Badge>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowCreditCardsForm(!showCreditCardsForm)}>
+                  <div className="flex items-center gap-4">
+                    <CreditCard className="size-6 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Manage Credit/Store Cards</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click to view and manage credit and store cards
+                      </p>
+                      <Badge className="mt-1 bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        {creditCardsCount} {creditCardsCount === 1 ? "item" : "items"} extracted
+                      </Badge>
+                    </div>
                   </div>
+                  <ArrowLeft
+                    className={cn(
+                      "size-5 rotate-180 text-muted-foreground transition-transform",
+                      showCreditCardsForm && "rotate-90",
+                    )}
+                  />
                 </div>
-                <ArrowLeft className="size-5 rotate-180 text-muted-foreground" />
+                {showCreditCardsForm && claimId && claim && (
+                  <div className="mt-6">
+                    <CreditCardsForm
+                      claimId={claimId}
+                      accidentDate={new Date(claim.dateOfAccident)}
+                      onCardsChange={(count) => setCreditCardsCount(count)}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
 

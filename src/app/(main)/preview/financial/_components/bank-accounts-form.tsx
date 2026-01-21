@@ -679,7 +679,15 @@ export function BankAccountsForm({ claimId, accidentDate, onAccountsChange }: Ba
               const months = generateMonthlyBreakdown(requiredPeriodStart, requiredPeriodEnd);
               const coverage = getCoverageStatus(accountIndex);
               const isExpanded = expandedAccounts[accountIndex] || false;
-              const uploadedStatements = accountStatements.filter((s) => s.uploaded && s.id);
+              // Get actual uploaded statements from database (not monthly breakdown)
+              const uploadedStatements = (account.bankStatements || []).map((stmt: any) => ({
+                id: stmt.id,
+                startDate: new Date(stmt.startDate),
+                endDate: new Date(stmt.endDate),
+                fileKey: stmt.fileKey,
+                fileName: stmt.fileName,
+                uploadedAt: stmt.uploadedAt ? new Date(stmt.uploadedAt) : undefined,
+              }));
 
               return (
                 <div key={accountIndex}>
@@ -871,7 +879,7 @@ export function BankAccountsForm({ claimId, accidentDate, onAccountsChange }: Ba
                                     <span className="text-muted-foreground">
                                       {statement.daysCovered}/{statement.totalDays} days
                                     </span>
-                                    <span className="text-muted-foreground">{statement.coveragePercent}%</span>
+                                    <span className="text-muted-foreground">{statement.coveragePercent.toFixed(2)}%</span>
                                   </div>
                                 </div>
                               </Card>

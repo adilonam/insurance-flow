@@ -28,6 +28,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdAt: "asc",
           },
         },
+        creditCards: {
+          include: {
+            cardStatements: {
+              orderBy: {
+                startDate: "asc",
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
@@ -49,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { id } = await params;
     const body = await request.json();
-    const { bankAccounts } = body;
+    const { bankAccounts, creditCards } = body;
 
     // Check if claim exists
     const claim = await prisma.claim.findUnique({
@@ -78,6 +90,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { financialStepId: financialStep.id },
     });
 
+    // Delete existing credit cards
+    await prisma.creditCard.deleteMany({
+      where: { financialStepId: financialStep.id },
+    });
+
     // Create new bank accounts
     if (bankAccounts && Array.isArray(bankAccounts) && bankAccounts.length > 0) {
       await prisma.bankAccount.createMany({
@@ -95,13 +112,39 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     }
 
-    // Return updated financial step with bank accounts
+    // Create new credit cards
+    if (creditCards && Array.isArray(creditCards) && creditCards.length > 0) {
+      await prisma.creditCard.createMany({
+        data: creditCards.map((card: any) => ({
+          financialStepId: financialStep.id,
+          issuer: card.issuer || null,
+          last4: card.last4 || null,
+          balance: card.balance ? parseFloat(card.balance.toString()) : null,
+          limit: card.limit ? parseFloat(card.limit.toString()) : null,
+          status: card.status || null,
+        })),
+      });
+    }
+
+    // Return updated financial step with bank accounts and credit cards
     const updatedFinancialStep = await prisma.financialStep.findUnique({
       where: { id: financialStep.id },
       include: {
         bankAccounts: {
           include: {
             bankStatements: {
+              orderBy: {
+                startDate: "asc",
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+        creditCards: {
+          include: {
+            cardStatements: {
               orderBy: {
                 startDate: "asc",
               },
