@@ -344,6 +344,7 @@ model Claim {
   uploadedFileName String?     // Original filename of uploaded file
 
   financialStep   FinancialStep?
+  offboardingStep OffboardingStep?
 
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
@@ -498,9 +499,37 @@ model Mortgage {
   @@index([financialStepId])
 }
 
+// Offboarding Step - One-to-one with Claim
+model OffboardingStep {
+  id        String   @id @default(cuid())
+  claimId   String   @unique
+  claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
 
+  documents OffboardingDocument[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+// Offboarding Document - Many-to-one with OffboardingStep
+model OffboardingDocument {
+  id                String            @id @default(cuid())
+  offboardingStepId String
+  offboardingStep   OffboardingStep   @relation(fields: [offboardingStepId], references: [id], onDelete: Cascade)
+
+  documentType      String            // e.g., "driving_license_front", "driving_license_back", "logbook", etc.
+  fileKey           String?           // S3 key for uploaded document (claims/os-docs/...)
+  fileName          String?           // Original filename
+  uploadedAt        DateTime?         // When the document was uploaded
+  isExcluded        Boolean           @default(false) // Whether document was excluded
+  excludedAt        DateTime?         // When the document was excluded
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([offboardingStepId])
+  @@index([documentType])
+}
 
 
 

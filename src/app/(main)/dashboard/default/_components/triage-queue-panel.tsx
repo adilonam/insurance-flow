@@ -104,7 +104,9 @@ function ClaimCard({ claim, status }: { claim: ClaimWithRelations; status: strin
                 ? `/preview/financial?id=${claim.id}`
                 : claim.status === "PENDING_LIVE_CLAIMS"
                   ? `/preview/live-claims?id=${claim.id}`
-                  : `/preview/triage?id=${claim.id}`
+                  : claim.status === "PENDING_OS_DOCS"
+                    ? `/preview/os-docs?id=${claim.id}`
+                    : `/preview/triage?id=${claim.id}`
             }
           >
             Review

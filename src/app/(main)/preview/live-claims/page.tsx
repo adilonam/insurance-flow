@@ -14,6 +14,7 @@ import {
   UserCircle,
   Car,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Prisma } from "@/generated/prisma/client";
 
@@ -23,6 +24,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuickAccessHeader } from "../_components/quick-access-header";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Claim = Prisma.ClaimGetPayload<{
   include: {
@@ -54,6 +64,8 @@ export default function LiveClaimsPreviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isStartingOffboarding, setIsStartingOffboarding] = useState(false);
+  const [showStartOffboardingDialog, setShowStartOffboardingDialog] = useState(false);
 
   useEffect(() => {
     if (!claimId) {
@@ -81,6 +93,36 @@ export default function LiveClaimsPreviewPage() {
 
     fetchClaim();
   }, [claimId]);
+
+  const handleStartOffboarding = async () => {
+    if (!claimId) return;
+
+    try {
+      setIsStartingOffboarding(true);
+      const response = await fetch(`/api/claims/${claimId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: "PENDING_OS_DOCS",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to start offboarding");
+      }
+
+      // Redirect to OS docs preview
+      router.push(`/preview/os-docs?id=${claimId}`);
+      router.refresh();
+    } catch (err) {
+      console.error("Error starting offboarding:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to start offboarding");
+    } finally {
+      setIsStartingOffboarding(false);
+    }
+  };
 
   // Generate case reference from claim ID (first 8 characters)
   const caseRef = claim?.id ? claim.id.substring(0, 8).toUpperCase() : "N/A";
@@ -128,7 +170,13 @@ export default function LiveClaimsPreviewPage() {
                 <Briefcase className="mr-2 size-4" />
                 Assign Handler
               </Button>
-              <Button variant="default" size="sm" className="bg-orange-600 hover:bg-orange-700">
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={() => setShowStartOffboardingDialog(true)}
+                disabled={isStartingOffboarding}
+              >
                 Start Offboarding
                 <ArrowRight className="ml-2 size-4" />
               </Button>
@@ -340,6 +388,38 @@ export default function LiveClaimsPreviewPage() {
           </Tabs>
         </div>
       </Card>
+
+      {/* Start Offboarding Confirmation Dialog */}
+      <Dialog open={showStartOffboardingDialog} onOpenChange={setShowStartOffboardingDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start Offboarding</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to start the offboarding process? This will change the claim status to PENDING_OS_DOCS and redirect you to the offboarding page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStartOffboardingDialog(false)} disabled={isStartingOffboarding}>
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={handleStartOffboarding}
+              disabled={isStartingOffboarding}
+            >
+              {isStartingOffboarding ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Start Offboarding"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
